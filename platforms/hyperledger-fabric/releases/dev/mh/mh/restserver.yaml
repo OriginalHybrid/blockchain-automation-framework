@@ -1,0 +1,46 @@
+apiVersion: flux.weave.works/v1beta1
+kind: HelmRelease
+metadata:
+  name: mh-restserver
+  namespace: mh-net
+  annotations:
+    flux.weave.works/automated: "false"
+spec:
+  chart:
+    path: examples/supplychain-app/charts/fabric-restserver
+    git: git@github.com:himanshulalarya/blockchain-automation-framework.git
+    ref: fabric-test
+  releaseName: mh-restserver
+  values:
+    metadata:
+      namespace: mh-net
+    server:
+      name: mh-restserver
+      port: 20001
+      localmspid: mhMSP
+      image: adopblockchaincloud0502.azurecr.io/supplychain_fabric/rest_server:latest
+      username: admin
+      cert_path: "/secret/tls/admin.cert"
+      key_path: "/secret/tls/admin.pem"
+    storage:
+      storageclassname: mhsc
+      storagesize: 512Mi
+    vault:
+      address: http://a6167b0bf69b911eab1a00673ff61cbe-206589349.eu-west-1.elb.amazonaws.com:9000
+      role: vault-role
+      authpath: mh-net-auth
+      secretprefix: secret/crypto/peerOrganizations/mh-net
+      serviceaccountname: vault-auth
+      imagesecretname: regcred
+      image: adopblockchaincloud0502.azurecr.io/alpine-utils:1.0
+    service:
+      servicetype: ClusterIP
+      ports:
+        apiPort: 20001
+        targetPort: 8000
+    connection:
+      peer: peer0.mh-net
+      peerAddress: peer0.mh-net.hf.dev.aws.blockchaincloudpoc-develop.com
+      peerPort: 8443
+      ordererAddress: orderer2.hf.dev.aws.blockchaincloudpoc-develop.com
+      ordererPort: 8443
