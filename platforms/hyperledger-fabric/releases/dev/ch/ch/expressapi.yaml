@@ -1,0 +1,35 @@
+apiVersion: flux.weave.works/v1beta1
+kind: HelmRelease
+metadata:
+  name: ch-expressapi
+  namespace: ch-net
+  annotations:
+    flux.weave.works/automated: "false"
+spec:
+  chart:
+    path: examples/supplychain-app/charts/expressapp
+    git: "git@github.com:himanshulalarya/blockchain-automation-framework.git"
+    ref: "fabric-test"
+  releaseName: ch-expressapi
+  values:
+    nodeName: ch-expressapi
+    metadata:
+      namespace: ch-net
+    replicaCount: 1
+    expressapp:
+      serviceType: ClusterIP
+      image: adopblockchaincloud0502.azurecr.io/supplychain_fabric/express_app:latest
+      pullPolicy: Always
+      pullSecrets: regcred
+      nodePorts:
+        port: 3000
+        targetPort: 3000
+        name: tcp
+      env:
+        apiUrl: http://ch-restserver.ch-net:20001/api/v1
+    proxy:
+      provider: haproxy
+      name: ch
+      type: fabric
+      external_url_suffix: hf.dev.aws.blockchaincloudpoc-develop.com
+      peer_name: peer0
