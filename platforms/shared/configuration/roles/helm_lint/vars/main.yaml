@@ -33,3 +33,5 @@ charts:
   nmap: nmap
   notary-initial-registration: notary-initial-registration
   notary: notary
+  bridge: bridge
+  float: float
