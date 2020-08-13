@@ -22,6 +22,7 @@ _molecule: &molecule
     - "3.6"
   install:
     - pip install molecule yamllint ansible-lint docker openshift
+    - export DOCKER_API_VERSION='1.38'
   script:
     - cd $DIR
     - molecule test -s $SCENARIO
