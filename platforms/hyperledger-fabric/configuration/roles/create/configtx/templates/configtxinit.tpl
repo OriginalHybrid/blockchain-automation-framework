@@ -101,7 +101,6 @@ Application: &ApplicationDefaults
 
       # ACL policy for sending filtered block events
       event/FilteredBlock: /Channel/Application/Readers
-
 {% endif %}
   Organizations:
 {% if '2.' in network.version %}
