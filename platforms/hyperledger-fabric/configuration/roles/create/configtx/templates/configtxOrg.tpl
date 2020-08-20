@@ -15,6 +15,12 @@
       Endorsement:
         Type: Signature
         Rule: "OR('{{ component_name }}MSP.member')"
+{% if '2.' in network.version %}
+    OrdererEndpoints:
+{% for orderer in  network.orderers %}
+      - "{{ orderer.uri }}"
+{% endfor %}
+{% endif %}
     {% if component_type == 'peer' %}      
     AnchorPeers:
       # AnchorPeers defines the location of peers which can be used

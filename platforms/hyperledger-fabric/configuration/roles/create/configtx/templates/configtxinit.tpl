@@ -108,10 +108,10 @@ Application: &ApplicationDefaults
   Policies: &ApplicationDefaultPolicies
     LifecycleEndorsement:
         Type: ImplicitMeta
-        Rule: "MAJORITY Endorsement"
+        Rule: "ANY Endorsement"
     Endorsement:
         Type: ImplicitMeta
-        Rule: "MAJORITY Endorsement"
+        Rule: "ANY Endorsement"
     Readers:
         Type: ImplicitMeta
         Rule: "ANY Readers"
