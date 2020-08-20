@@ -1,0 +1,69 @@
+apiVersion: flux.weave.works/v1beta1
+kind: HelmRelease
+metadata:
+  name: channel-ch
+  namespace: ch-net
+  annotations:
+    flux.weave.works/automated: "false"
+spec:
+  releaseName: channel-ch
+  chart:
+    git: git@github.com:himanshulalarya/blockchain-automation-framework.git
+    ref: new
+    path: platforms/hyperledger-fabric/charts/create_channel   
+  values:
+    metadata:
+      namespace: ch-net
+      images:
+        fabrictools: hyperledger/fabric-tools:2.0.0
+        alpineutils: index.docker.io/hyperledgerlabs/alpine-utils:1.0
+    peer:
+      name: peer0
+      address: peer0.ch-net:7051
+      localmspid: chMSP
+      loglevel: debug
+      tlsstatus: true
+
+    vault:
+      role: vault-role
+      address: http://vault.internal.dev2.aws.blockchaincloudpoc-develop.com:20001
+      authpath: ch-net-auth
+      adminsecretprefix: secret/crypto/peerOrganizations/ch-net/users/admin
+      orderersecretprefix: secret/crypto/peerOrganizations/ch-net/orderer 
+      serviceaccountname: vault-auth
+      imagesecretname: regcred
+
+    channel:
+      name: allchannel
+    orderer:
+      address: orderer3.hf.dev.aws.blockchaincloudpoc-develop.com:8443
+    channeltx: |-
+      CvEMChgKFggCGgYI5uf4+QUiCmFsbGNoYW5uZWwS1AwK0QwKCmFsbGNoYW5uZWwSNxIlCgtBcHBs
+      aWNhdGlvbhIWEgkKBWNoTVNQEgASCQoFbWhNU1ASABoOCgpDb25zb3J0aXVtEgAaiQwS3QsKC0Fw
+      cGxpY2F0aW9uEs0LCAESCQoFY2hNU1ASABIJCgVtaE1TUBIAGrMJCgRBQ0xzEqoJEp8JCkYKJF9s
+      aWZlY3ljbGUvQ29tbWl0Q2hhaW5jb2RlRGVmaW5pdGlvbhIeChwvQ2hhbm5lbC9BcHBsaWNhdGlv
+      bi9Xcml0ZXJzCkUKI19saWZlY3ljbGUvUXVlcnlDaGFpbmNvZGVEZWZpbml0aW9uEh4KHC9DaGFu
+      bmVsL0FwcGxpY2F0aW9uL1JlYWRlcnMKNQoTY3NjYy9HZXRDb25maWdCbG9jaxIeChwvQ2hhbm5l
+      bC9BcHBsaWNhdGlvbi9SZWFkZXJzCkAKHmxzY2MvR2V0SW5zdGFudGlhdGVkQ2hhaW5jb2RlcxIe
+      ChwvQ2hhbm5lbC9BcHBsaWNhdGlvbi9SZWFkZXJzCjUKE2V2ZW50L0ZpbHRlcmVkQmxvY2sSHgoc
+      L0NoYW5uZWwvQXBwbGljYXRpb24vUmVhZGVycwo4ChZsc2NjL0dldERlcGxveW1lbnRTcGVjEh4K
+      HC9DaGFubmVsL0FwcGxpY2F0aW9uL1JlYWRlcnMKRgokX2xpZmVjeWNsZS9RdWVyeUNoYWluY29k
+      ZURlZmluaXRpb25zEh4KHC9DaGFubmVsL0FwcGxpY2F0aW9uL1JlYWRlcnMKMwoRcXNjYy9HZXRD
+      aGFpbkluZm8SHgocL0NoYW5uZWwvQXBwbGljYXRpb24vUmVhZGVycwo3ChVsc2NjL0dldENoYWlu
+      Y29kZURhdGESHgocL0NoYW5uZWwvQXBwbGljYXRpb24vUmVhZGVycwo3ChVxc2NjL0dldEJsb2Nr
+      QnlOdW1iZXISHgocL0NoYW5uZWwvQXBwbGljYXRpb24vUmVhZGVycwotCgtldmVudC9CbG9jaxIe
+      ChwvQ2hhbm5lbC9BcHBsaWNhdGlvbi9SZWFkZXJzCjkKF3FzY2MvR2V0VHJhbnNhY3Rpb25CeUlE
+      Eh4KHC9DaGFubmVsL0FwcGxpY2F0aW9uL1JlYWRlcnMKPwodY3NjYy9TaW11bGF0ZUNvbmZpZ1Ry
+      ZWVVcGRhdGUSHgocL0NoYW5uZWwvQXBwbGljYXRpb24vUmVhZGVycwo0ChJjc2NjL0dldENvbmZp
+      Z1RyZWUSHgocL0NoYW5uZWwvQXBwbGljYXRpb24vUmVhZGVycwouCgxwZWVyL1Byb3Bvc2USHgoc
+      L0NoYW5uZWwvQXBwbGljYXRpb24vV3JpdGVycwo1ChNxc2NjL0dldEJsb2NrQnlUeElEEh4KHC9D
+      aGFubmVsL0FwcGxpY2F0aW9uL1JlYWRlcnMKNgoUbHNjYy9DaGFpbmNvZGVFeGlzdHMSHgocL0No
+      YW5uZWwvQXBwbGljYXRpb24vUmVhZGVycwpBCh9fbGlmZWN5Y2xlL0NoZWNrQ29tbWl0UmVhZGlu
+      ZXNzEh4KHC9DaGFubmVsL0FwcGxpY2F0aW9uL1dyaXRlcnMKOwoZcGVlci9DaGFpbmNvZGVUb0No
+      YWluY29kZRIeChwvQ2hhbm5lbC9BcHBsaWNhdGlvbi9SZWFkZXJzCjUKE3FzY2MvR2V0QmxvY2tC
+      eUhhc2gSHgocL0NoYW5uZWwvQXBwbGljYXRpb24vUmVhZGVycxoGQWRtaW5zGiQKDENhcGFiaWxp
+      dGllcxIUEgoKCAoEVjJfMBIAGgZBZG1pbnMiIgoGQWRtaW5zEhgSDggDEgoKBkFkbWlucxACGgZB
+      ZG1pbnMiNQoUTGlmZWN5Y2xlRW5kb3JzZW1lbnQSHRITCAMSDwoLRW5kb3JzZW1lbnQQAhoGQWRt
+      aW5zIiwKC0VuZG9yc2VtZW50Eh0SEwgDEg8KC0VuZG9yc2VtZW50EAIaBkFkbWlucyIiCgdSZWFk
+      ZXJzEhcSDQgDEgkKB1JlYWRlcnMaBkFkbWlucyIiCgdXcml0ZXJzEhcSDQgDEgkKB1dyaXRlcnMa
+      BkFkbWlucyoGQWRtaW5zGicKCkNvbnNvcnRpdW0SGRIXChVTdXBwbHlDaGFpbkNvbnNvcnRpdW0=
