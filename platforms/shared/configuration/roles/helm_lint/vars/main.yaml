@@ -35,3 +35,4 @@ charts:
   notary: notary
   bridge: bridge
   float: float
+  cli: fabric_cli
