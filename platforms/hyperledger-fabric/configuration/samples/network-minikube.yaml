@@ -75,7 +75,6 @@ network:
       type: orderer
       external_url_suffix: develop.local.com
       org_status: new
-      cli: disabled
       ca_data:
         url: ca.supplychain-net:7054
         certificate: file/server.crt        # This has not been implemented in 0.2.0.0
@@ -145,7 +144,6 @@ network:
       type: peer
       external_url_suffix: develop.local.com
       org_status: new
-      cli: enabled
       ca_data:
         url: ca.manufacturer-net:7054
         certificate: file/server.crt
@@ -191,7 +189,8 @@ network:
         - peer:
           name: peer0          
           type: anchor    # This can be anchor/nonanchor. Atleast one peer should be anchor peer.         
-          gossippeeraddress: peer0.manufacturer-net:7051 # Internal Address of the other peer in same Org for gossip, same peer if there is only one peer          
+          gossippeeraddress: peer0.manufacturer-net:7051 # Internal Address of the other peer in same Org for gossip, same peer if there is only one peer  
+          cli: enabled        
           grpc:
             port: 7051         
           events:
@@ -226,7 +225,6 @@ network:
       type: peer
       external_url_suffix: develop.local.com
       org_status: new
-      cli: enabled
       ca_data:
         url: ca.carrier-net:7054
         certificate: file/server.crt
@@ -271,6 +269,7 @@ network:
           name: peer0          
           type: anchor    # This can be anchor/nonanchor. Atleast one peer should be anchor peer.    
           gossippeeraddress: peer0.carrier-net:7051 # Internal Address of the other peer in same Org for gossip, same peer if there is only one peer          
+          cli: enabled
           grpc:
             port: 7051         
           events:
