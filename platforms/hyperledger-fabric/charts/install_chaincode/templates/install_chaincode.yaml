@@ -162,6 +162,8 @@ spec:
 
           elif [[ ${NETWORK_VERSION} == "2."* ]]
           then
+              echo "Inside 2.x chaincode"
+              echo ${NETWORK_VERSION} 
               ## packaging chaincode
               peer lifecycle chaincode package ${CHAINCODE_NAME}.tar.gz --path github.com/chaincode/${CHAINCODE_NAME}/${CHAINCODE_MAINDIR} --lang ${CC_RUNTIME_LANGUAGE} --label ${CHAINCODE_NAME}_${CHAINCODE_VERSION}
 
