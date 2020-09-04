@@ -51,7 +51,7 @@ spec:
         - name: MOUNT_PATH
           value: /secret
         - name: NETWORK_VERSION
-          value: "{{ $.Values.network.version}}"
+          value: "{{ $.Values.metadata.network.version}}"
         command: ["sh", "-c"]
         args:
         - |-
