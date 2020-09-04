@@ -157,6 +157,8 @@ spec:
           
           if [ ${NETWORK_VERSION} == '1.4.4' ]
           then
+              echo "Inside 1.4 chaincode"
+              echo ${NETWORK_VERSION} 
               ## Installing chaincode on a peer
               peer chaincode install -n ${CHAINCODE_NAME} -v ${CHAINCODE_VERSION} -p github.com/chaincode/${CHAINCODE_NAME}/${CHAINCODE_MAINDIR}
 
