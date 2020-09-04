@@ -161,7 +161,7 @@ spec:
               echo ${NETWORK_VERSION} 
               ## Installing chaincode on a peer
               peer chaincode install -n ${CHAINCODE_NAME} -v ${CHAINCODE_VERSION} -p github.com/chaincode/${CHAINCODE_NAME}/${CHAINCODE_MAINDIR}
-
+              echo "1.4 cmd executed"
           elif [ ${NETWORK_VERSION} == "2."* ]
           then
               echo "Inside 2.x chaincode"
@@ -171,6 +171,7 @@ spec:
 
               ## Installing Chaincode
               peer lifecycle chaincode install ${CHAINCODE_NAME}.tar.gz
+              echo "1.4 cmd executed"
           fi
         env:
         - name: CORE_VM_ENDPOINT
