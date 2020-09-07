@@ -130,7 +130,7 @@ spec:
           {{ if eq  $.Values.metadata.network.version "1.4.4" }}
             echo "peer chaincode invoke -o ${ORDERER_URL} --tls ${CORE_PEER_TLS_ENABLED} --cafile ${ORDERER_CA} -C ${CHANNEL_NAME} -n ${CHAINCODE_NAME} -c $qARGS" >> ./invokeChaincode.sh
           {{ else }}
-              echo "peer chaincode invoke -o ${ORDERER_URL} --tls ${CORE_PEER_TLS_ENABLED} --cafile ${ORDERER_CA} -C ${CHANNEL_NAME} -n ${CHAINCODE_NAME} --isInit -c $qARGS" >> ./invokeChaincode.sh
+            echo "peer chaincode invoke -o ${ORDERER_URL} --tls ${CORE_PEER_TLS_ENABLED} --cafile ${ORDERER_CA} -C ${CHANNEL_NAME} -n ${CHAINCODE_NAME} --isInit -c $qARGS" >> ./invokeChaincode.sh
           {{ end }}
           
           chmod 755 ./invokeChaincode.sh
