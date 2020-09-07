@@ -127,14 +127,11 @@ spec:
           export ARGS='{"Args":'"'["${INSTANTIATION_ARGUMENTS}"]'"'}'
           export qARGS="'${ARGS}'"
           touch ./invokeChaincode.sh
-          if [ ${NETWORK_VERSION} == '1.4.4' ]
-          then
-              echo "peer chaincode invoke -o ${ORDERER_URL} --tls ${CORE_PEER_TLS_ENABLED} --cafile ${ORDERER_CA} -C ${CHANNEL_NAME} -n ${CHAINCODE_NAME} -c $qARGS" >> ./invokeChaincode.sh
-
-          elif [[ ${NETWORK_VERSION} == "2."* ]]
-          then
+          {{ if eq  $.Values.metadata.network.version "1.4.4" }}
+            echo "peer chaincode invoke -o ${ORDERER_URL} --tls ${CORE_PEER_TLS_ENABLED} --cafile ${ORDERER_CA} -C ${CHANNEL_NAME} -n ${CHAINCODE_NAME} -c $qARGS" >> ./invokeChaincode.sh
+          {{ else }}
               echo "peer chaincode invoke -o ${ORDERER_URL} --tls ${CORE_PEER_TLS_ENABLED} --cafile ${ORDERER_CA} -C ${CHANNEL_NAME} -n ${CHAINCODE_NAME} --isInit -c $qARGS" >> ./invokeChaincode.sh
-          fi
+          {{ end }}
           
           chmod 755 ./invokeChaincode.sh
           sh ./invokeChaincode.sh
