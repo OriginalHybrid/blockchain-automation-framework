@@ -155,13 +155,13 @@ spec:
           mkdir -p $GOPATH/bin && curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
           cd $GOPATH/src/github.com/chaincode && dep ensure
 
-          {{ if eq  ${NETWORK_VERSION} "1.4.4" }}
+          {{ if eq  $.Values.metadata.network.version "1.4.4" }}
             echo "Inside 1.4 chaincode"
             echo ${NETWORK_VERSION} 
             ## Installing chaincode on a peer
             peer chaincode install -n ${CHAINCODE_NAME} -v ${CHAINCODE_VERSION} -p github.com/chaincode/${CHAINCODE_NAME}/${CHAINCODE_MAINDIR}
             echo "1.4 cmd executed"
-          {{ else if eq  ${NETWORK_VERSION} "2."* }}
+          {{ else if eq  $.Values.metadata.network.version "2."* }}
             echo "Inside 2.x chaincode"
             echo ${NETWORK_VERSION} 
             ## packaging chaincode
