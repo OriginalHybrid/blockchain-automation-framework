@@ -161,7 +161,7 @@ spec:
             ## Installing chaincode on a peer
             peer chaincode install -n ${CHAINCODE_NAME} -v ${CHAINCODE_VERSION} -p github.com/chaincode/${CHAINCODE_NAME}/${CHAINCODE_MAINDIR}
             echo "1.4 cmd executed"
-          {{ else if eq  $.Values.metadata.network.version "2."* }}
+          {{ else }}
             echo "Inside 2.x chaincode"
             echo ${NETWORK_VERSION} 
             ## packaging chaincode
