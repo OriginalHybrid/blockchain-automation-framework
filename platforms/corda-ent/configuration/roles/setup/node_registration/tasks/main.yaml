@@ -30,11 +30,7 @@
     git_branch: "{{ org.gitops.branch }}"
     node_name: "{{ peer.name | lower }}"
     image_pull_secret: "regcred"
-<<<<<<< HEAD
-    storageclass: "cenmsc"
-=======
     storageclass: "cordaentsc"
->>>>>>> upstream/develop
     container_name: "index.docker.io/hyperledgerlabs/h2:2018"
     tcp_port: "{{ peer.dbtcp.port }}"
     tcp_targetport: "{{ peer.dbtcp.targetPort }}"
