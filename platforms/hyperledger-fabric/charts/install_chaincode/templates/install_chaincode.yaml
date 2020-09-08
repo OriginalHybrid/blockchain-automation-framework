@@ -50,6 +50,8 @@ spec:
           value: "{{ $.Values.vault.orderersecretprefix }}"
         - name: MOUNT_PATH
           value: /secret
+        - name: NETWORK_VERSION
+          value: "{{ $.Values.metadata.network.version}}"
         command: ["sh", "-c"]
         args:
         - |-
@@ -152,8 +154,23 @@ spec:
           # Get dependencies
           mkdir -p $GOPATH/bin && curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
           cd $GOPATH/src/github.com/chaincode && dep ensure
-          ## Installing chaincode on a peer
-          peer chaincode install -n ${CHAINCODE_NAME} -v ${CHAINCODE_VERSION} -p github.com/chaincode/${CHAINCODE_NAME}/${CHAINCODE_MAINDIR}
+
+          {{ if eq  $.Values.metadata.network.version "1.4.4" }}
+            echo "Inside 1.4 chaincode"
+            echo ${NETWORK_VERSION} 
+            ## Installing chaincode on a peer
+            peer chaincode install -n ${CHAINCODE_NAME} -v ${CHAINCODE_VERSION} -p github.com/chaincode/${CHAINCODE_NAME}/${CHAINCODE_MAINDIR}
+            echo "1.4 cmd executed"
+          {{ else }}
+            echo "Inside 2.x chaincode"
+            echo ${NETWORK_VERSION} 
+            ## packaging chaincode
+            peer lifecycle chaincode package ${CHAINCODE_NAME}.tar.gz --path github.com/chaincode/${CHAINCODE_NAME}/${CHAINCODE_MAINDIR} --lang ${CC_RUNTIME_LANGUAGE} --label ${CHAINCODE_NAME}_${CHAINCODE_VERSION}
+            ## Installing Chaincode
+            peer lifecycle chaincode install ${CHAINCODE_NAME}.tar.gz
+            echo "2.x cmd executed"
+          {{ end }}
+
         env:
         - name: CORE_VM_ENDPOINT
           value: unix:///host/var/run/docker.sock
@@ -183,6 +200,10 @@ spec:
           value: "{{ $.Values.chaincode.version }}"
         - name: CORE_CHAINCODE_BUILDER
           value: "{{ $.Values.chaincode.builder }}"
+        - name: NETWORK_VERSION
+          value: "{{ $.Values.metadata.network.version }}"
+        - name: CC_RUNTIME_LANGUAGE
+          value: "{{ $.Values.chaincode.lang }}"
         volumeMounts:
         - name: certificates
           mountPath: /opt/gopath/src/github.com/hyperledger/fabric/crypto
