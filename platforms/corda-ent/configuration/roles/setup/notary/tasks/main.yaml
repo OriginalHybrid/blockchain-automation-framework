@@ -38,7 +38,11 @@
     git_url: "{{ org.gitops.git_ssh }}"
     git_branch: "{{ org.gitops.branch }}"
     node_name: "{{ org.services.notary.name }}"
+<<<<<<< HEAD
+    storageclass: "cenmsc"
+=======
     storageclass: "cordaentsc"
+>>>>>>> upstream/develop
     init_container_name: "index.docker.io/hyperledgerlabs/alpine-utils:1.0"
     image_pull_secret: "regcred"
     vault_addr: "{{ org.vault.url }}"

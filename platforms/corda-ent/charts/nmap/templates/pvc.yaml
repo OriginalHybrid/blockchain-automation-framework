@@ -42,7 +42,11 @@ spec:
   storageClassName: {{ .Values.storage.name }}
   resources:
     requests:
+<<<<<<< HEAD
+      storage: 256Mi
+=======
       storage: 64Mi
+>>>>>>> upstream/develop
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
