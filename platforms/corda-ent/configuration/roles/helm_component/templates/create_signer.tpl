@@ -16,19 +16,9 @@ spec:
     metadata:
       namespace: {{ component_ns }}
     image:
-<<<<<<< HEAD
-      imagePullSecret: regcred
-      initContainerName: index.docker.io/hyperledgerlabs/alpine-utils:1.0
-    storage:
-      name: cenmsc
-    dockerImageSigner:
-      name: corda/enterprise-signer
-      tag: 1.2-zulu-openjdk8u242
-=======
       initContainerName: {{ network.docker.url }}/alpine-utils:1.0
       signerContainerName: {{ network.docker.url }}/corda/enterprise-signer:1.2-zulu-openjdk8u242
       imagePullSecret: regcred
->>>>>>> upstream/develop
       pullPolicy: Always
     acceptLicense: YES
     vault:
