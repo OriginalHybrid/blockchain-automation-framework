@@ -140,6 +140,8 @@ spec:
         command: ["sh", "-c"]
         args:
         - |-
+          #!/bin/bash
+          
           ## Git repository clone for chaincode
           mkdir -p /root/.ssh/          
           apk add curl openssh
