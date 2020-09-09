@@ -146,7 +146,8 @@ spec:
           ssh-keyscan {{ $.Values.chaincode.repository.hostname }} > /root/.ssh/known_hosts
           git_password=$(cat /opt/gopath/src/github.com/hyperledger/fabric/crypto/user_cred)
           cd /tmp && git clone https://{{ $.Values.chaincode.repository.git_username }}:$git_password@{{ $.Values.chaincode.repository.url }} -b {{ $.Values.chaincode.repository.branch }} chaincode
-          
+          ls
+          echo $GOPATH
           {{ if eq  $.Values.chaincode.lang "golang" }}
             ## Copying desired chaincode to a location relative to $GOPATH/src
             mkdir -p $GOPATH/src/github.com/chaincode
@@ -162,10 +163,17 @@ spec:
           {{ else if eq  $.Values.chaincode.lang "java" }}
           
             ## Copying desired chaincode to a location 
-            mkdir -p ./src/github.com/chaincode
-            cp -R /tmp/chaincode/{{ $.Values.chaincode.repository.path }}/* ./src/github.com/chaincode/
+            mkdir -p src/github.com/chaincode
+            cp -R /tmp/chaincode/{{ $.Values.chaincode.repository.path }}/* src/github.com/chaincode/
+            cd src/github.com/chaincode && dep ensure
 
-            CC_SRC_PATH="./src/github.com/chaincode/"
+            ls
+
+            CC_SRC_PATH="/tmp/src/github.com/chaincode/"
+
+            echo $CC_SRC_PATH
+            ls $CC_SRC_PATH
+
             infoln "Compiling Java code..."
             pushd $CC_SRC_PATH
             ./gradlew installDist
@@ -174,6 +182,9 @@ spec:
 
             #chaincode path
             CC_SRC_PATH=$CC_SRC_PATH/build/install/${CHAINCODE_NAME}
+
+            echo $CC_SRC_PATH
+            ls $CC_SRC_PATH
 
           {{ end }}
 
