@@ -146,24 +146,46 @@ spec:
           ssh-keyscan {{ $.Values.chaincode.repository.hostname }} > /root/.ssh/known_hosts
           git_password=$(cat /opt/gopath/src/github.com/hyperledger/fabric/crypto/user_cred)
           cd /tmp && git clone https://{{ $.Values.chaincode.repository.git_username }}:$git_password@{{ $.Values.chaincode.repository.url }} -b {{ $.Values.chaincode.repository.branch }} chaincode
+          
+          {{ if eq  $.Values.chaincode.lang "golang" }}
+            ## Copying desired chaincode to a location relative to $GOPATH/src
+            mkdir -p $GOPATH/src/github.com/chaincode
+            cp -R /tmp/chaincode/{{ $.Values.chaincode.repository.path }}/* $GOPATH/src/github.com/chaincode/
 
-          ## Copying desired chaincode to a location relative to $GOPATH/src
-          mkdir -p $GOPATH/src/github.com/chaincode
-          cp -R /tmp/chaincode/{{ $.Values.chaincode.repository.path }}/* $GOPATH/src/github.com/chaincode/
+            # Get dependencies
+            mkdir -p $GOPATH/bin && curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+            cd $GOPATH/src/github.com/chaincode && dep ensure
 
-          # Get dependencies
-          mkdir -p $GOPATH/bin && curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
-          cd $GOPATH/src/github.com/chaincode && dep ensure
+            #chaincode path
+            CC_SRC_PATH="github.com/chaincode/${CHAINCODE_NAME}/${CHAINCODE_MAINDIR}"
+            
+          {{ else if eq  $.Values.chaincode.lang "java" }}
+          
+            ## Copying desired chaincode to a location 
+            mkdir -p ./src/github.com/chaincode
+            cp -R /tmp/chaincode/{{ $.Values.chaincode.repository.path }}/* ./src/github.com/chaincode/
+
+            CC_SRC_PATH="./src/github.com/chaincode/"
+            infoln "Compiling Java code..."
+            pushd $CC_SRC_PATH
+            ./gradlew installDist
+            popd
+            successln "Finished compiling Java code"
+
+            #chaincode path
+            CC_SRC_PATH=$CC_SRC_PATH/build/install/${CHAINCODE_NAME}
+
+          {{ end }}
 
           {{ if eq  $.Values.metadata.network.version "1.4.4" }}
             echo ${NETWORK_VERSION} 
             ## Installing chaincode on a peer
-            peer chaincode install -n ${CHAINCODE_NAME} -v ${CHAINCODE_VERSION} -p github.com/chaincode/${CHAINCODE_NAME}/${CHAINCODE_MAINDIR}
+            peer chaincode install -n ${CHAINCODE_NAME} -v ${CHAINCODE_VERSION} -p ${CC_SRC_PATH}
             echo "Chaincode install for Fabric v.1.4.4"
           {{ else }}
             echo ${NETWORK_VERSION} 
             ## packaging chaincode
-            peer lifecycle chaincode package ${CHAINCODE_NAME}.tar.gz --path github.com/chaincode/${CHAINCODE_NAME}/${CHAINCODE_MAINDIR} --lang ${CC_RUNTIME_LANGUAGE} --label ${CHAINCODE_NAME}_${CHAINCODE_VERSION}
+            peer lifecycle chaincode package ${CHAINCODE_NAME}.tar.gz --path ${CC_SRC_PATH} --lang ${CC_RUNTIME_LANGUAGE} --label ${CHAINCODE_NAME}_${CHAINCODE_VERSION}
             ## Installing Chaincode
             peer lifecycle chaincode install ${CHAINCODE_NAME}.tar.gz
             echo "Chaincode install for Fabric v.2.X"
