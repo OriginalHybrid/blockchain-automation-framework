@@ -176,16 +176,16 @@ spec:
             cd $GOPATH/src/github.com/chaincode && dep ensure
 
             ls
-            CC_SRC_PATH="/tmp/src/github.com/chaincode/"
+            CC_SRC_PATH="/$GOPATH/src/github.com/chaincode/"
 
             echo "CC_SRC_PATH= $CC_SRC_PATH"
             echo "pwd"
             pwd
             ls $CC_SRC_PATH
 
-            infoln "Compiling Java code..."
+            echo "Compiling Java code..."
             pushd $CC_SRC_PATH
-            ./gradlew installDist
+            ./gradlew installDist --stacktrace
             popd
             successln "Finished compiling Java code"
 
