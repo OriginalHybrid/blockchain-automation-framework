@@ -39,6 +39,6 @@ spec:
       name: {{ component_chaincode.name | lower | e }}
       version: {{ component_chaincode.version }}
       commitarguments: {{ component_chaincode.arguments | quote}}
-      endorsementpolicies:  {{ component_chaincode.endorsements | quote}}
+      endorsementpolicies:  {{ component_chaincode.endorsements | quote }}
     channel:
       name: {{ item.channel_name | lower }}

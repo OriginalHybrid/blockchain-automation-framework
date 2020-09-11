@@ -202,7 +202,7 @@ spec:
             echo ${NETWORK_VERSION} 
             ## Installing chaincode on a peer
             peer chaincode install -n ${CHAINCODE_NAME} -v ${CHAINCODE_VERSION} -p ${CC_SRC_PATH}
-            echo "Chaincode install for Fabric v.1.4.4"
+            echo "Chaincode install for Fabric v.1.4.4"         
           {{ else }}
             echo ${NETWORK_VERSION} 
             ## packaging chaincode
@@ -210,6 +210,18 @@ spec:
             ## Installing Chaincode
             peer lifecycle chaincode install ${CHAINCODE_NAME}.tar.gz
             echo "Chaincode install for Fabric v.2.X"
+            
+            {{ if $.Values.chaincode.endorsementpolicies }}
+              ## approve for myorg
+              echo "peer query approve"
+              peer lifecycle chaincode approveformyorg -o ${ORDERER_URL} --tls ${CORE_PEER_TLS_ENABLED} --cafile ${ORDERER_CA} --channelID ${CHANNEL_NAME} --name ${CHAINCODE_NAME} --version ${CHAINCODE_VERSION} --package-id ${PACKAGE_ID} --sequence 1 --init-required --signature-policy {{ $.Values.chaincode.endorsementpolicies | quote }} > log.txt
+              cat log.txt
+            {{ else }}
+              ## approve for myorg
+              echo "peer query approve"
+              peer lifecycle chaincode approveformyorg -o ${ORDERER_URL} --tls ${CORE_PEER_TLS_ENABLED} --cafile ${ORDERER_CA} --channelID ${CHANNEL_NAME} --name ${CHAINCODE_NAME} --version ${CHAINCODE_VERSION} --package-id ${PACKAGE_ID} --sequence 1 --init-required > log.txt
+              cat log.txt
+            {{ end }}
           {{ end }}
 
         env:
@@ -245,6 +257,8 @@ spec:
           value: "{{ $.Values.metadata.network.version }}"
         - name: CC_RUNTIME_LANGUAGE
           value: "{{ $.Values.chaincode.lang }}"
+        - name: CHANNEL_NAME
+          value: "{{ $.Values.channel.name }}"
         volumeMounts:
         - name: certificates
           mountPath: /opt/gopath/src/github.com/hyperledger/fabric/crypto
