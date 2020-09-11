@@ -160,6 +160,7 @@ spec:
                 peer channel create -o ${ORDERER_URL} -c ${CHANNEL_NAME} -f channel.tx
               else
                 peer channel create -o ${ORDERER_URL} -c ${CHANNEL_NAME} -f channel.tx --outputBlock /tmp/${CHANNEL_NAME}.block
+              fi
             fi
           fi
         workingDir: /opt/gopath/src/github.com/hyperledger/fabric/peer
