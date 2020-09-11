@@ -124,15 +124,11 @@ spec:
         command: ["sh", "-c"]
         args:
         - |-
+          #!/bin/bash
           echo $COMMIT_ARGUMENTS>COMMIT_ARGUMENTS.txt
           COMMIT_ARGUMENTS=$(< COMMIT_ARGUMENTS.txt)
           
-          #query installed
-          echo "peer query installed"
-          peer lifecycle chaincode queryinstalled
-          export PACKAGE_ID=$(sed -n "/${CHAINCODE_NAME}_${CHAINCODE_VERSION}/{s/^Package ID: //; s/, Label:.*$//; p;}")
-          
-          {{ if $.Values.chaincode.endorsementpolicies  }}
+          {{ if $.Values.chaincode.endorsementpolicies }}
             ## check commit rediness
             echo "peer query commitrediness"
             peer lifecycle chaincode checkcommitreadiness --channelID ${CHANNEL_NAME} --name ${CHAINCODE_NAME} --version ${CHAINCODE_VERSION} --sequence 1 --init-required --signature-policy {{ $.Values.chaincode.endorsementpolicies | quote}} --output json
