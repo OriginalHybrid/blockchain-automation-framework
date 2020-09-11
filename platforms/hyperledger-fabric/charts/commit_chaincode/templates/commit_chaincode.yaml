@@ -145,12 +145,15 @@ spec:
             ## approve for myorg
             echo "peer query approve"
             peer lifecycle chaincode approveformyorg -o ${ORDERER_URL} --tls ${CORE_PEER_TLS_ENABLED} --cafile ${ORDERER_CA} --channelID ${CHANNEL_NAME} --name ${CHAINCODE_NAME} --version ${CHAINCODE_VERSION} --package-id ${PACKAGE_ID} --sequence 1 --init-required > log.txt
+            cat log.txt
             ## check commit rediness
             echo "peer query commit rediness"
             peer lifecycle chaincode checkcommitreadiness --channelID ${CHANNEL_NAME} --name ${CHAINCODE_NAME} --version ${CHAINCODE_VERSION} --sequence 1 --init-required --output json > log.txt
+            cat log.txt
             ## commit chaincode
             echo "peer query commit"
             peer lifecycle chaincode commit -o ${ORDERER_URL} --tls ${CORE_PEER_TLS_ENABLED} --cafile $ORDERER_CA --channelID $CHANNEL_NAME --name ${CC_NAME} --version ${CC_VERSION} --sequence 1 --init-required > log.txt
+            cat log.txt
           {{ end }}
               
         env:
