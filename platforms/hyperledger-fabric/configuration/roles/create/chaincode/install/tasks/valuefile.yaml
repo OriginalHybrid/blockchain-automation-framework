@@ -47,7 +47,6 @@
     component_chaincode: "{{ peer.chaincode }}"
     fabrictools_image: "hyperledger/fabric-tools:{{ network.version }}"
     alpine_image: "{{ docker_url }}/alpine-utils:1.0"
-    channel: "{{ network.channel | first }}"
   loop: "{{ network['orderers'] }}"
   loop_control:
     loop_var: orderer
