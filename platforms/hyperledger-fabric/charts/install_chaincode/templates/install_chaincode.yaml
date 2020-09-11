@@ -185,9 +185,7 @@ spec:
             ls $CC_SRC_PATH
 
             echo "Compiling Java code..."
-            cd $CC_SRC_PATH
             ./gradlew installDist --stacktrace
-            cd $current_path
             echo "Finished compiling Java code"
 
             #chaincode path
