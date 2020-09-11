@@ -128,14 +128,15 @@ spec:
           echo $COMMIT_ARGUMENTS>COMMIT_ARGUMENTS.txt
           COMMIT_ARGUMENTS=$(< COMMIT_ARGUMENTS.txt)
           
-          {{ if $.Values.chaincode.endorsementpolicies }}
+          if [ ${ENDORSEMENT_POLICIES} ]
+          then
             ## check commit rediness
             echo "peer query commitrediness"
             peer lifecycle chaincode checkcommitreadiness --channelID ${CHANNEL_NAME} --name ${CHAINCODE_NAME} --version ${CHAINCODE_VERSION} --sequence 1 --init-required --signature-policy {{ $.Values.chaincode.endorsementpolicies | quote}} --output json
             ## commit chaincode
             echo "peer query commit"
             peer lifecycle chaincode commit -o ${ORDERER_URL} --tls ${CORE_PEER_TLS_ENABLED} --cafile $ORDERER_CA --channelID $CHANNEL_NAME --name ${CC_NAME} --version ${CC_VERSION} --sequence 1 --init-required --signature-policy {{ $.Values.chaincode.endorsementpolicies | quote}}
-          {{ else }}
+          else
             ## check commit rediness
             echo "peer query commit rediness"
             peer lifecycle chaincode checkcommitreadiness --channelID ${CHANNEL_NAME} --name ${CHAINCODE_NAME} --version ${CHAINCODE_VERSION} --sequence 1 --init-required --output json > log.txt
@@ -144,7 +145,7 @@ spec:
             echo "peer query commit"
             peer lifecycle chaincode commit -o ${ORDERER_URL} --tls ${CORE_PEER_TLS_ENABLED} --cafile $ORDERER_CA --channelID $CHANNEL_NAME --name ${CC_NAME} --version ${CC_VERSION} --sequence 1 --init-required > log.txt
             cat log.txt
-          {{ end }}
+          fi
               
         env:
         - name: CORE_VM_ENDPOINT
@@ -179,6 +180,8 @@ spec:
           value: '{{ $.Values.chaincode.commitarguments }}'
         - name: CC_RUNTIME_LANGUAGE
           value: "{{ $.Values.chaincode.lang }}"
+        - name: ENDORSEMENT_POLICIES
+          value: "{{ $.Values.chaincode.endorsementpolicies }}"
         volumeMounts:
         - name: certificates
           mountPath: /opt/gopath/src/github.com/hyperledger/fabric/crypto

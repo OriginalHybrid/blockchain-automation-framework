@@ -133,15 +133,16 @@ spec:
           peer lifecycle chaincode queryinstalled
           export PACKAGE_ID=$(sed -n "/${CHAINCODE_NAME}_${CHAINCODE_VERSION}/{s/^Package ID: //; s/, Label:.*$//; p;}")
 
-          {{ if $.Values.chaincode.endorsementpolicies }}
+          if [ ${ENDORSEMENT_POLICIES} ]
+          then
             ## approve for myorg
             echo "peer query approve"
             peer lifecycle chaincode approveformyorg -o ${ORDERER_URL} --tls ${CORE_PEER_TLS_ENABLED} --cafile ${ORDERER_CA} --channelID ${CHANNEL_NAME} --name ${CHAINCODE_NAME} --version ${CHAINCODE_VERSION} --package-id ${PACKAGE_ID} --sequence ${CHAINCODE_VERSION} --init-required --signature-policy {{ $.Values.chaincode.endorsementpolicies | quote }} > log.txt
-          {{ else }}
+          else
             ## approve for myorg
             echo "peer query approve"
             peer lifecycle chaincode approveformyorg -o ${ORDERER_URL} --tls ${CORE_PEER_TLS_ENABLED} --cafile ${ORDERER_CA} --channelID ${CHANNEL_NAME} --name ${CHAINCODE_NAME} --version ${CHAINCODE_VERSION} --package-id ${PACKAGE_ID} --sequence ${CHAINCODE_VERSION} --init-required > log.txt  
-          {{ end }}
+          fi
               
         env:
         - name: CORE_VM_ENDPOINT
@@ -176,6 +177,8 @@ spec:
           value: '{{ $.Values.chaincode.commitarguments }}'
         - name: CC_RUNTIME_LANGUAGE
           value: "{{ $.Values.chaincode.lang }}"
+        - name: ENDORSEMENT_POLICIES
+          value: "{{ $.Values.chaincode.endorsementpolicies }}"
         volumeMounts:
         - name: certificates
           mountPath: /opt/gopath/src/github.com/hyperledger/fabric/crypto
