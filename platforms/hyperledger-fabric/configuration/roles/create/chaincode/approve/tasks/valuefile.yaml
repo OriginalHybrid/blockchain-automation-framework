@@ -22,7 +22,7 @@
     kind: "Job"
     namespace: "{{ namespace }}"
     label_selectors:
-      - "app = approvechaincode-{{peer.chaincode.name}}-{{ peer.chaincode.version }}"
+      - "app = approvechaincode-{{ peer.name }}-{{ peer.chaincode.name }}-{{ peer.chaincode.version }}"
     kubeconfig: "{{ kubernetes.config_file }}"
     context: "{{ kubernetes.context }}"
   vars:
@@ -41,7 +41,7 @@
   vars:    
     name: "{{ org.name | lower }}"
     type: "approve_chaincode_job"
-    component_name: "approve-{{ org.name | lower }}-{{item.channel_name|lower}}-{{peer.chaincode.name}}{{peer.chaincode.version}}"
+    component_name: "approve-{{ org.name | lower }}-{{ item.channel_name|lower }}-{{ peer.name }}-{{peer.chaincode.name}}{{peer.chaincode.version}}"
     namespace: "{{ org.name |lower }}-net"
     peer_name: "{{ peer.name }}"
     peer_address: "{{ peer.name }}.{{ org.name |lower }}-net:{{ peer.grpc.port }}"
