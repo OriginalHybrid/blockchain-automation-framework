@@ -27,7 +27,7 @@ spec:
       role: vault-role
       address: {{ vault.url }}
       authpath: {{ namespace | e }}-auth
-      adminsecretprefix: secret/crypto/peerOrganizations/{{ namespace }}/users/admin 
+      adminsecretprefix: secret/crypto/peerOrganizations/{{ namespace }}/users/admin
       orderersecretprefix: secret/crypto/peerOrganizations/{{ namespace }}/orderer
       serviceaccountname: vault-auth
       imagesecretname: regcred
@@ -42,3 +42,6 @@ spec:
       endorsementpolicies:  {{ component_chaincode.endorsements | quote }}
     channel:
       name: {{ item.channel_name | lower }}
+    joinerpeers:
+      adminsecretprefix: secret/crypto/peerOrganizations/mh-net/users/admin
+      address: "{{ peer.name }}.mh-net:{{ peer.grpc.port }}"
