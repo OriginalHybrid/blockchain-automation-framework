@@ -131,9 +131,9 @@ spec:
           echo "Extracting package id"
           peer lifecycle chaincode queryinstalled > log.txt
           PACKAGE_ID=$(sed -n "/${CC_NAME}_${CC_VERSION}/{s/^Package ID: //; s/, Label:.*$//; p;}" log.txt)
-          echo "package Id Extracted"
+          echo "Package Id Extracted"
 
-          echo "endorse policy ${ENDORSEMENT_POLICIES}"
+          echo "Endorsing policy :${ENDORSEMENT_POLICIES}"
           if [ -z ${ENDORSEMENT_POLICIES} ]
           then
             ## approve for myorg
