@@ -124,7 +124,7 @@ spec:
         command: ["sh", "-c"]
         args:
         - |-
-          #!/bin/bash
+          #!/bin/bash sh
           echo $COMMIT_ARGUMENTS>COMMIT_ARGUMENTS.txt
           COMMIT_ARGUMENTS=$(< COMMIT_ARGUMENTS.txt)
           
