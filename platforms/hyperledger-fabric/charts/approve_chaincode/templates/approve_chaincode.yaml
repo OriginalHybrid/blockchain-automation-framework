@@ -128,10 +128,8 @@ spec:
           echo $COMMIT_ARGUMENTS>COMMIT_ARGUMENTS.txt
           COMMIT_ARGUMENTS=$(< COMMIT_ARGUMENTS.txt)
           
-          #query installed
-          echo "peer query installed"
-          peer lifecycle chaincode queryinstalled
-          export PACKAGE_ID=$(sed -n "/${CHAINCODE_NAME}_${CHAINCODE_VERSION}/{s/^Package ID: //; s/, Label:.*$//; p;}")
+
+          PACKAGE_ID=$(sed -n "/${CHAINCODE_NAME}_${CHAINCODE_VERSION}/{s/^Package ID: //; s/, Label:.*$//; p;}")
 
           echo "endorse policy ${ENDORSEMENT_POLICIES}"
           if [ -z ${ENDORSEMENT_POLICIES} ]

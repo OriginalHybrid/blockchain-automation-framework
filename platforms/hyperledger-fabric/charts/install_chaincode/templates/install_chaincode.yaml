@@ -213,6 +213,10 @@ spec:
             echo "Chaincode install for Fabric v.2.X"
           fi
 
+          #query installed
+          echo "peer query installed"
+          peer lifecycle chaincode queryinstalled
+
         env:
         - name: CORE_VM_ENDPOINT
           value: unix:///host/var/run/docker.sock
