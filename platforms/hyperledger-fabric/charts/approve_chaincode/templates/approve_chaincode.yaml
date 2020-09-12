@@ -129,7 +129,8 @@ spec:
           COMMIT_ARGUMENTS=$(< COMMIT_ARGUMENTS.txt)
           
           echo "Extracting package id"
-          PACKAGE_ID=$(sed -n "/${CHAINCODE_NAME}_${CHAINCODE_VERSION}/{s/^Package ID: //; s/, Label:.*$//; p;}")
+          peer lifecycle chaincode queryinstalled > log.txt
+          PACKAGE_ID=$(sed -n "/${CC_NAME}_${CC_VERSION}/{s/^Package ID: //; s/, Label:.*$//; p;}" log.txt)
           echo "package Id Extracted"
 
           echo "endorse policy ${ENDORSEMENT_POLICIES}"
