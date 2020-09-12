@@ -46,6 +46,8 @@ spec:
           value: {{ $.Values.vault.role }}
         - name: VAULT_PEER_SECRET_PREFIX
           value: "{{ $.Values.vault.adminsecretprefix }}"
+        - name: VAULT_JOINER_PEER_SECRET_PREFIX
+          value: "{{ $.Values.joinerpeers.adminsecretprefix }}"
         - name: VAULT_ORDERER_SECRET_PREFIX
           value: "{{ $.Values.vault.orderersecretprefix }}"
         - name: MOUNT_PATH
@@ -107,6 +109,33 @@ spec:
           echo "${CACERTS}" >> ${OUTPUT_PATH}/cacerts/ca.crt
           echo "${KEYSTORE}" >> ${OUTPUT_PATH}/keystore/server.key
           echo "${SIGNCERTS}" >> ${OUTPUT_PATH}/signcerts/server.crt
+
+          ########### Downloading Certs of all Endorsing Peers ################
+
+          vault_secret_key="${VAULT_JOINER_PEER_SECRET_PREFIX}/msp"
+          echo "Getting MSP certificates from Vault using key $vault_secret_key"
+
+          OUTPUT_PATH="${MOUNT_PATH}/endorsers/mh-net/admin/msp"
+          LOOKUP_SECRET_RESPONSE=$(curl -sS  \
+            --header "X-Vault-Token: ${VAULT_CLIENT_TOKEN}" \
+            ${VAULT_ADDR}/v1/${vault_secret_key} | jq -r 'if .errors then . else . end')
+          validateVaultResponse "secret (${vault_secret_key})" "${LOOKUP_SECRET_RESPONSE}"
+
+          ADMINCERT=$(echo ${LOOKUP_SECRET_RESPONSE} | jq -r '.data["admincerts"]')
+          CACERTS=$(echo ${LOOKUP_SECRET_RESPONSE} | jq -r '.data["cacerts"]')
+          KEYSTORE=$(echo ${LOOKUP_SECRET_RESPONSE} | jq -r '.data["keystore"]')
+          SIGNCERTS=$(echo ${LOOKUP_SECRET_RESPONSE} | jq -r '.data["signcerts"]')
+
+          mkdir -p ${OUTPUT_PATH}/admincerts
+          mkdir -p ${OUTPUT_PATH}/cacerts
+          mkdir -p ${OUTPUT_PATH}/keystore
+          mkdir -p ${OUTPUT_PATH}/signcerts
+
+          echo "${ADMINCERT}" >> ${OUTPUT_PATH}/admincerts/admin.crt
+          echo "${CACERTS}" >> ${OUTPUT_PATH}/cacerts/ca.crt
+          echo "${KEYSTORE}" >> ${OUTPUT_PATH}/keystore/server.key
+          echo "${SIGNCERTS}" >> ${OUTPUT_PATH}/signcerts/server.crt
+          
         volumeMounts:
         {{ if .Values.vault.tls  }}
         - name: vaultca
@@ -135,7 +164,7 @@ spec:
             peer lifecycle chaincode checkcommitreadiness --channelID ${CHANNEL_NAME} --name ${CHAINCODE_NAME} --version ${CHAINCODE_VERSION} --sequence 1 --init-required --output json
             ## commit chaincode
             echo "peer query commit : Endorsement Policy "" "
-            peer lifecycle chaincode commit -o ${ORDERER_URL} --tls ${CORE_PEER_TLS_ENABLED} --cafile $ORDERER_CA --channelID $CHANNEL_NAME --name ${CHAINCODE_NAME} --version ${CHAINCODE_VERSION} --sequence 1 --init-required 
+            peer lifecycle chaincode commit -o ${ORDERER_URL} --tls ${CORE_PEER_TLS_ENABLED} --cafile $ORDERER_CA --peerAddresses ${CORE_PEER_ADDRESS} -tlsRootCertFiles ${CORE_PEER_TLS_ROOTCERT_FILE} --peerAddresses ${ENDORSER_PEER_ADDRESS} -tlsRootCertFiles ${ENDORSING_PEER_TLS_ROOTCERT_FILE} --channelID $CHANNEL_NAME --name ${CHAINCODE_NAME} --version ${CHAINCODE_VERSION} --sequence 1 --init-required 
           else
             ## check commit rediness
             echo "peer query commit rediness"
@@ -143,7 +172,7 @@ spec:
             cat log.txt
             ## commit chaincode
             echo "peer query commit"
-            peer lifecycle chaincode commit -o ${ORDERER_URL} --tls ${CORE_PEER_TLS_ENABLED} --cafile $ORDERER_CA --channelID $CHANNEL_NAME --name ${CHAINCODE_NAME} --version ${CHAINCODE_VERSION} --sequence 1 --init-required --signature-policy {{ $.Values.chaincode.endorsementpolicies | quote }} > log.txt
+            peer lifecycle chaincode commit -o ${ORDERER_URL} --tls ${CORE_PEER_TLS_ENABLED} --cafile $ORDERER_CA --peerAddresses ${CORE_PEER_ADDRESS} -tlsRootCertFiles ${CORE_PEER_TLS_ROOTCERT_FILE} --peerAddresses ${ENDORSER_PEER_ADDRESS} -tlsRootCertFiles ${ENDORSING_PEER_TLS_ROOTCERT_FILE} --channelID $CHANNEL_NAME --name ${CHAINCODE_NAME} --version ${CHAINCODE_VERSION} --sequence 1 --init-required --signature-policy {{ $.Values.chaincode.endorsementpolicies | quote }} > log.txt
             cat log.txt
           fi
               
@@ -156,11 +185,15 @@ spec:
           value: {{ $.Values.peer.name }}.{{ $.Values.metadata.namespace }}
         - name: CORE_PEER_ADDRESS
           value: {{ $.Values.peer.address }}
+        - name: ENDORSER_PEER_ADDRESS
+          value: {{ $.Values.joinerpeers.address }}
         - name: CORE_PEER_LOCALMSPID
           value: {{ $.Values.peer.localmspid }}
         - name: CORE_PEER_TLS_ENABLED
           value: "{{ $.Values.peer.tlsstatus }}"
         - name: CORE_PEER_TLS_ROOTCERT_FILE
+          value: /opt/gopath/src/github.com/hyperledger/fabric/crypto/admin/msp/cacerts/ca.crt
+        - name: ENDORSING_PEER_TLS_ROOTCERT_FILE
           value: /opt/gopath/src/github.com/hyperledger/fabric/crypto/admin/msp/cacerts/ca.crt
         - name: ORDERER_CA
           value: /opt/gopath/src/github.com/hyperledger/fabric/crypto/orderer/tls/ca.crt
