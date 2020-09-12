@@ -8,9 +8,8 @@
 - name: "Create value file for chaincode approve"
   include_tasks: valuefile.yaml
   vars:
-    channelcreator_query: "participants[?type=='creator']"
     org_query: "organizations[?name=='{{participant.name}}']"
     org: "{{ network | json_query(org_query) | first }}"
-  loop: "{{ item | json_query(channelcreator_query) }}"
+  loop: "{{ participants }}"
   loop_control:
     loop_var: participant
