@@ -118,6 +118,8 @@ spec:
             SECRETPREFIX=secret/crypto/peerOrganizations/$NAMESPACE/endorsers/$ns/users/admin/
 
             echo "Fetching certificates for org: $ns"
+            echo $NAMESPACE
+            echo $SECRETPREFIX
           done
           
         volumeMounts:
