@@ -46,8 +46,8 @@ spec:
           value: {{ $.Values.vault.role }}
         - name: VAULT_PEER_SECRET_PREFIX
           value: "{{ $.Values.vault.adminsecretprefix }}"
-        - name: VAULT_JOINER_PEER_SECRET_PREFIX
-          value: "{{ $.Values.joinerpeers.adminsecretprefix }}"
+        - name: ENDORSING_ORG_NAMES
+          value: "{{ $.Values.endorsers.name }}"
         - name: VAULT_ORDERER_SECRET_PREFIX
           value: "{{ $.Values.vault.orderersecretprefix }}"
         - name: MOUNT_PATH
@@ -86,29 +86,51 @@ spec:
           mkdir -p ${OUTPUT_PATH}
           echo "${TLS_CA_CERT}" >> ${OUTPUT_PATH}/ca.crt
 
-          vault_secret_key="${VAULT_PEER_SECRET_PREFIX}/msp"
-          echo "Getting MSP certificates from Vault using key $vault_secret_key"
+          ##############################################################################################################
 
-          OUTPUT_PATH="${MOUNT_PATH}/admin/msp"
-          LOOKUP_SECRET_RESPONSE=$(curl -sS  \
-            --header "X-Vault-Token: ${VAULT_CLIENT_TOKEN}" \
-            ${VAULT_ADDR}/v1/${vault_secret_key} | jq -r 'if .errors then . else . end')
-          validateVaultResponse "secret (${vault_secret_key})" "${LOOKUP_SECRET_RESPONSE}"
+          #Downloading Certs for all endorsing peers
 
-          ADMINCERT=$(echo ${LOOKUP_SECRET_RESPONSE} | jq -r '.data["admincerts"]')
-          CACERTS=$(echo ${LOOKUP_SECRET_RESPONSE} | jq -r '.data["cacerts"]')
-          KEYSTORE=$(echo ${LOOKUP_SECRET_RESPONSE} | jq -r '.data["keystore"]')
-          SIGNCERTS=$(echo ${LOOKUP_SECRET_RESPONSE} | jq -r '.data["signcerts"]')
+          for ns in $ENDORSING_ORG_NAMES
+          do
+            NAMESPACE="$ns-net"
+            SECRETPREFIX=secret/crypto/peerOrganizations/$NAMESPACE/users/admin
 
-          mkdir -p ${OUTPUT_PATH}/admincerts
-          mkdir -p ${OUTPUT_PATH}/cacerts
-          mkdir -p ${OUTPUT_PATH}/keystore
-          mkdir -p ${OUTPUT_PATH}/signcerts
+            echo "Fetching certificates for org: $ns"
 
-          echo "${ADMINCERT}" >> ${OUTPUT_PATH}/admincerts/admin.crt
-          echo "${CACERTS}" >> ${OUTPUT_PATH}/cacerts/ca.crt
-          echo "${KEYSTORE}" >> ${OUTPUT_PATH}/keystore/server.key
-          echo "${SIGNCERTS}" >> ${OUTPUT_PATH}/signcerts/server.crt
+            KUBE_SA_TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+            echo "Getting secrets from Vault Server: ${VAULT_ADDR}"
+            # Login to Vault and so I can get an approle token
+            VAULT_CLIENT_TOKEN=$(curl -sS  --request POST ${VAULT_ADDR}/v1/auth/$NAMESPACE-auth/login \
+              -H "Content-Type: application/json" \
+              -d '{"role":"'"${VAULT_APP_ROLE}"'","jwt":"'"${KUBE_SA_TOKEN}"'"}' | \
+              jq -r 'if .errors then . else .auth.client_token end')
+            validateVaultResponse 'vault login token' "${VAULT_CLIENT_TOKEN}"
+
+            vault_secret_key="$SECRETPREFIX/msp"
+            echo "Getting MSP certificates from Vault using key $vault_secret_key"
+
+            OUTPUT_PATH="${MOUNT_PATH}/$NAMESPACE/admin/msp"
+            LOOKUP_SECRET_RESPONSE=$(curl -sS  \
+              --header "X-Vault-Token: ${VAULT_CLIENT_TOKEN}" \
+              ${VAULT_ADDR}/v1/${vault_secret_key} | jq -r 'if .errors then . else . end')
+            validateVaultResponse "secret (${vault_secret_key})" "${LOOKUP_SECRET_RESPONSE}"
+
+            ADMINCERT=$(echo ${LOOKUP_SECRET_RESPONSE} | jq -r '.data["admincerts"]')
+            CACERTS=$(echo ${LOOKUP_SECRET_RESPONSE} | jq -r '.data["cacerts"]')
+            KEYSTORE=$(echo ${LOOKUP_SECRET_RESPONSE} | jq -r '.data["keystore"]')
+            SIGNCERTS=$(echo ${LOOKUP_SECRET_RESPONSE} | jq -r '.data["signcerts"]')
+
+            mkdir -p ${OUTPUT_PATH}/admincerts
+            mkdir -p ${OUTPUT_PATH}/cacerts
+            mkdir -p ${OUTPUT_PATH}/keystore
+            mkdir -p ${OUTPUT_PATH}/signcerts
+
+            echo "${ADMINCERT}" >> ${OUTPUT_PATH}/admincerts/admin.crt
+            echo "${CACERTS}" >> ${OUTPUT_PATH}/cacerts/ca.crt
+            echo "${KEYSTORE}" >> ${OUTPUT_PATH}/keystore/server.key
+            echo "${SIGNCERTS}" >> ${OUTPUT_PATH}/signcerts/server.crt
+
+          done
           
         volumeMounts:
         {{ if .Values.vault.tls  }}
@@ -159,8 +181,6 @@ spec:
           value: {{ $.Values.peer.name }}.{{ $.Values.metadata.namespace }}
         - name: CORE_PEER_ADDRESS
           value: {{ $.Values.peer.address }}
-        - name: ENDORSER_PEER_ADDRESS
-          value: {{ $.Values.joinerpeers.address }}
         - name: CORE_PEER_LOCALMSPID
           value: {{ $.Values.peer.localmspid }}
         - name: CORE_PEER_TLS_ENABLED
