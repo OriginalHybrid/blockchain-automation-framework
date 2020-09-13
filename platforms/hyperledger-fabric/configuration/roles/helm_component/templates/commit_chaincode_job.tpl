@@ -42,6 +42,6 @@ spec:
       endorsementpolicies:  {{ component_chaincode.endorsements | quote }}
     channel:
       name: {{ item.channel_name | lower }}
-    joinerpeers:
-      adminsecretprefix: secret/crypto/peerOrganizations/mh-net/users/admin
-      address: "{{ peer.name }}.mh-net:{{ peer.grpc.port }}"
+    endorsers:
+      name: {% for name in item.endorsers.name %}{{ name }} {% endfor %} 
+      corepeeraddress: {% for address in item.endorsers.corepeeraddress %}{{ address }} {% endfor %} 

@@ -34,6 +34,15 @@
   register: commit_chaincode
   when: peer.chaincode is defined
 
+- name: "Write all endorsing orgs certificates to vault"
+  include_tasks: write.yaml
+  vars:
+    namespace: "{{ org.name |lower }}-net"
+    vault: "{{ org.vault }}"
+  loop: "{{ item.endorsers.name }}"
+  loop_control:
+    loop_var: endorser
+
 # Nested task for chaincode commit
 - name: "Create value file for chaincode commit"
   include_role:

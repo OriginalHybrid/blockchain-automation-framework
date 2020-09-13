@@ -1,0 +1,7 @@
+---
+- name: Copy organization level certificates for orgs
+  shell: |
+    vault write secret/crypto/peerOrganizations/{{ namespace }}/endorsers/{{ endorser }}/users/admin/msp cacerts="$(cat ./build/crypto-config/peerOrganizations/{{ endorser }}-net/users/Admin@{{ endorser }}-net/msp/cacerts/ca-{{ endorser }}-net-7054.pem)"
+  environment:
+    VAULT_ADDR: "{{ vault.url }}"
+    VAULT_TOKEN: "{{ vault.root_token }}"
