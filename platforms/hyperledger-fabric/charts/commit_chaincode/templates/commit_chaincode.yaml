@@ -125,8 +125,6 @@ spec:
 
             OUTPUT_PATH="${MOUNT_PATH}/endorsers/$ns/msp"
             echo $OUTPUT_PATH
-
-
           done
           
         volumeMounts:
