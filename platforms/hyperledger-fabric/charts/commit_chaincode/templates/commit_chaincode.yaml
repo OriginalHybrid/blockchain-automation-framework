@@ -48,6 +48,8 @@ spec:
           value: "{{ $.Values.vault.adminsecretprefix }}"
         - name: ENDORSING_ORG_NAMES
           value: "{{ $.Values.endorsers.name }}"
+        - name: CREATOR_NS
+          value: "{{ $.Values.endorsers.creator }}"
         - name: VAULT_ORDERER_SECRET_PREFIX
           value: "{{ $.Values.vault.orderersecretprefix }}"
         - name: MOUNT_PATH
@@ -114,12 +116,24 @@ spec:
           echo $ENDORSING_ORG_NAMES
           for ns in $ENDORSING_ORG_NAMES
           do
-            NAMESPACE="$ns-net"
-            SECRETPREFIX=secret/crypto/peerOrganizations/$NAMESPACE/endorsers/$ns/users/admin/
+            SECRETPREFIX=secret/crypto/peerOrganizations/${CREATOR_NS}/endorsers/$ns/users/admin/
 
             echo "Fetching certificates for org: $ns"
-            echo $NAMESPACE
             echo $SECRETPREFIX
+
+            vault_secret_key="$SECRETPREFIX/msp"
+            echo "Getting MSP certificates from Vault using key $vault_secret_key"
+
+            OUTPUT_PATH="${MOUNT_PATH}/endorsers/$ns/msp"
+            LOOKUP_SECRET_RESPONSE=$(curl -sS  \
+              --header "X-Vault-Token: ${VAULT_CLIENT_TOKEN}" \
+              ${VAULT_ADDR}/v1/${vault_secret_key} | jq -r 'if .errors then . else . end')
+            validateVaultResponse "secret (${vault_secret_key})" "${LOOKUP_SECRET_RESPONSE}"
+
+            CACERTS=$(echo ${LOOKUP_SECRET_RESPONSE} | jq -r '.data["cacerts"]')
+
+            mkdir -p ${OUTPUT_PATH}/cacerts
+            echo "${CACERTS}" >> ${OUTPUT_PATH}/cacerts/ca.crt
           done
           
         volumeMounts:
@@ -152,8 +166,8 @@ spec:
             echo "peer query commit : Endorsement Policy null "
             #peer lifecycle chaincode commit -o ${ORDERER_URL} --tls ${CORE_PEER_TLS_ENABLED} --cafile $ORDERER_CA --peerAddresses ${CORE_PEER_ADDRESS} -tlsRootCertFiles ${CORE_PEER_TLS_ROOTCERT_FILE} --peerAddresses ${ENDORSER_PEER_ADDRESS} -tlsRootCertFiles ${ENDORSING_PEER_TLS_ROOTCERT_FILE} --channelID $CHANNEL_NAME --name ${CHAINCODE_NAME} --version ${CHAINCODE_VERSION} --sequence 1 --init-required 
           else
-            ## check commit rediness
-            echo "peer query commit rediness"
+            ## check commit readiness
+            echo "peer query commit readiness"
             #peer lifecycle chaincode checkcommitreadiness --channelID ${CHANNEL_NAME} --name ${CHAINCODE_NAME} --version ${CHAINCODE_VERSION} --sequence 1 --init-required --output json --signature-policy {{ $.Values.chaincode.endorsementpolicies | quote }} > log.txt
             cat log.txt
             ## commit chaincode
