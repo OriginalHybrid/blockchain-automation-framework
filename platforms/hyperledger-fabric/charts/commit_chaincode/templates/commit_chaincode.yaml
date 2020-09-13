@@ -116,7 +116,7 @@ spec:
           echo $ENDORSING_ORG_NAMES
           for ns in $ENDORSING_ORG_NAMES
           do
-            SECRETPREFIX=secret/crypto/peerOrganizations/${CREATOR_NS}/endorsers/$ns/users/admin/
+            SECRETPREFIX=secret/crypto/peerOrganizations/${CREATOR_NS}/endorsers/$ns/users/admin
             echo "Fetching certificates for org: $ns"
             echo $SECRETPREFIX
 
@@ -125,6 +125,15 @@ spec:
 
             OUTPUT_PATH="${MOUNT_PATH}/endorsers/$ns/msp"
             echo $OUTPUT_PATH
+            LOOKUP_SECRET_RESPONSE=$(curl -sS  \
+              --header "X-Vault-Token: ${VAULT_CLIENT_TOKEN}" \
+              ${VAULT_ADDR}/v1/${vault_secret_key} | jq -r 'if .errors then . else . end')
+            validateVaultResponse "secret (${vault_secret_key})" "${LOOKUP_SECRET_RESPONSE}"
+
+            CACERTS=$(echo ${LOOKUP_SECRET_RESPONSE} | jq -r '.data["cacerts"]')
+
+            mkdir -p ${OUTPUT_PATH}/cacerts
+            echo "${CACERTS}" >> ${OUTPUT_PATH}/cacerts/ca.crt
           done
           
         volumeMounts:
