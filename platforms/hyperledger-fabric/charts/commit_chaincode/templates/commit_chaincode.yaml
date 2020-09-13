@@ -125,25 +125,8 @@ spec:
 
             OUTPUT_PATH="${MOUNT_PATH}/endorsers/$ns/msp"
             echo $OUTPUT_PATH
+            
           done
-
-
-          vault_secret_key=secret/crypto/peerOrganizations/ch-net/endorsers/mh/users/admin/msp"
-          echo "Getting MSP certificates from Vault for mh using key $vault_secret_key"
-
-          OUTPUT_PATH="${MOUNT_PATH}/endorsers/mh/msp"
-          LOOKUP_SECRET_RESPONSE=$(curl -sS  \
-            --header "X-Vault-Token: ${VAULT_CLIENT_TOKEN}" \
-            ${VAULT_ADDR}/v1/${vault_secret_key} | jq -r 'if .errors then . else . end')
-          validateVaultResponse "secret (${vault_secret_key})" "${LOOKUP_SECRET_RESPONSE}"
-
-          CACERTS=$(echo ${LOOKUP_SECRET_RESPONSE} | jq -r '.data["cacerts"]')
-
-          mkdir -p ${OUTPUT_PATH}/cacerts
-
-          echo "${CACERTS}" >> ${OUTPUT_PATH}/cacerts/ca.crt
-
-          echo "Ca crt downloaded for mh"
           
         volumeMounts:
         {{ if .Values.vault.tls  }}
