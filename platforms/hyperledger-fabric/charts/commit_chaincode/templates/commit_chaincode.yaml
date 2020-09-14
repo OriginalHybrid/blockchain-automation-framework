@@ -165,6 +165,8 @@ spec:
           #!/bin/bash sh
           echo $COMMIT_ARGUMENTS>COMMIT_ARGUMENTS.txt
           COMMIT_ARGUMENTS=$(< COMMIT_ARGUMENTS.txt)
+
+          tail -f /dev/null
           
           if [ -z ${ENDORSEMENT_POLICIES} ]
           then
