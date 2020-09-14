@@ -167,19 +167,21 @@ spec:
 
           tail -f /dev/null
           COMMIT_CMD="peer lifecycle chaincode commit -o ${ORDERER_URL} --tls ${CORE_PEER_TLS_ENABLED} --cafile $ORDERER_CA --peerAddresses ${CORE_PEER_ADDRESS} -tlsRootCertFiles ${CORE_PEER_TLS_ROOTCERT_FILE} --channelID $CHANNEL_NAME --name ${CHAINCODE_NAME} --version ${CHAINCODE_VERSION} --sequence 1 --init-required"
+          
           for item in $ENDORSERS_CORE_PEER_ADDR
           do
             COMMIT_CMD=${COMMIT_CMD}" --peerAddresses "${item}
           done
 
-          echo $COMMIT_CMD
+          echo ${COMMIT_CMD}
 
-          for item in $ENDORSERS_CORE_PEER_ADDR
+          for item in $ENDORSING_ORG_NAMES
           do
-            COMMIT_CMD=${COMMIT_CMD}" --tlsRootCertFiles "${item}
+            path="/opt/gopath/src/github.com/hyperledger/fabric/crypto/endorsers/${ns}/users/admin/msp/ca.crt"
+            COMMIT_CMD=${COMMIT_CMD}" --tlsRootCertFiles "${path}
           done
 
-          echo $COMMIT_CMD
+          echo ${COMMIT_CMD}
 
           if [ -z ${ENDORSEMENT_POLICIES} ]
           then
@@ -200,7 +202,6 @@ spec:
             COMMIT_CMD=${COMMIT_CMD}${endorsement_policy}
             eval ${COMMIT_CMD}
           fi
-              
         env:
         - name: CORE_VM_ENDPOINT
           value: unix:///host/var/run/docker.sock
@@ -238,6 +239,8 @@ spec:
           value: "{{ $.Values.chaincode.endorsementpolicies | quote }}"
         - name: ENDORSERS_CORE_PEER_ADDR
           value: "{{ $.Values.endorsers.corepeeraddress }}"
+        - name: ENDORSING_ORG_NAMES
+          value: "{{ $.Values.endorsers.name }}"
         volumeMounts:
         - name: certificates
           mountPath: /opt/gopath/src/github.com/hyperledger/fabric/crypto

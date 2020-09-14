@@ -96,3 +96,8 @@ channel:
   #Provide the name of the channel
   #Eg. name: mychannel
   name:
+
+endorsers:
+  creator: 
+  name: 
+  corepeeraddress: 
