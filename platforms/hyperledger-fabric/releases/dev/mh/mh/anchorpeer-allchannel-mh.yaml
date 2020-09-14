@@ -1,0 +1,49 @@
+apiVersion: flux.weave.works/v1beta1
+kind: HelmRelease
+metadata:
+  name: anchorpeer-allchannel-mh
+  namespace: mh-net
+  annotations:
+    flux.weave.works/automated: "false"
+spec:
+  releaseName: anchorpeer-allchannel-mh
+  chart:
+    git: git@github.com:himanshulalarya/blockchain-automation-framework.git
+    ref: fabric2.2v
+    path: platforms/hyperledger-fabric/charts/anchorpeer
+  values:
+    metadata:
+      namespace: mh-net
+      images:
+        fabrictools: hyperledger/fabric-tools:2.2.0
+        alpineutils: index.docker.io/hyperledgerlabs/alpine-utils:1.0
+
+    peer:
+      name: peer0
+      address: peer0.mh-net.hf.dev2.aws.blockchaincloudpoc-develop.com:8443
+      localmspid: mhMSP
+      loglevel: debug
+      tlsstatus: true
+
+    vault:
+      role: vault-role
+      address: http://vault.internal.dev2.aws.blockchaincloudpoc-develop.com:20001
+      authpath: mh-net-auth
+      adminsecretprefix: secret/crypto/peerOrganizations/mh-net/users/admin
+      orderersecretprefix: secret/crypto/peerOrganizations/mh-net/orderer
+      serviceaccountname: vault-auth
+      imagesecretname: regcred
+
+    channel:
+      name: allchannel      
+    orderer:
+      address: orderer8.hf.dev2.aws.blockchaincloudpoc-develop.com:8443
+    anchorstx: |-
+      CtQCChgKFggCGgYIvY3++gUiCmFsbGNoYW5uZWwStwIKtAIKCmFsbGNoYW5uZWwSXhJcCgtBcHBs
+      aWNhdGlvbhJNCAESSQoFbWhNU1ASQBoHCgNNU1ASACILCgdXcml0ZXJzEgAiCgoGQWRtaW5zEgAi
+      DwoLRW5kb3JzZW1lbnQSACILCgdSZWFkZXJzEgAaxQESwgEKC0FwcGxpY2F0aW9uErIBCAESrQEK
+      BW1oTVNQEqMBCAEaVwoLQW5jaG9yUGVlcnMSSBI+CjwKN3BlZXIwLm1oLW5ldC5oZi5kZXYyLmF3
+      cy5ibG9ja2NoYWluY2xvdWRwb2MtZGV2ZWxvcC5jb20Q+0EaBkFkbWlucxoHCgNNU1ASACIKCgZB
+      ZG1pbnMSACIPCgtFbmRvcnNlbWVudBIAIgsKB1JlYWRlcnMSACILCgdXcml0ZXJzEgAqBkFkbWlu
+      cw==
+
