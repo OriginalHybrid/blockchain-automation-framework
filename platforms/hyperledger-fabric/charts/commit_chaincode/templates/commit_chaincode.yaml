@@ -165,8 +165,7 @@ spec:
           #!/bin/bash sh
           echo $COMMIT_ARGUMENTS>COMMIT_ARGUMENTS.txt
           COMMIT_ARGUMENTS=$(< COMMIT_ARGUMENTS.txt)
-
-          tail -f /dev/null
+          
           COMMIT_CMD="peer lifecycle chaincode commit -o ${ORDERER_URL} --tls ${CORE_PEER_TLS_ENABLED} --cafile $ORDERER_CA --peerAddresses ${CORE_PEER_ADDRESS} -tlsRootCertFiles ${CORE_PEER_TLS_ROOTCERT_FILE} --channelID $CHANNEL_NAME --name ${CHAINCODE_NAME} --version ${CHAINCODE_VERSION} --sequence 1 --init-required"
           
           for item in $ENDORSERS_CORE_PEER_ADDR
@@ -203,7 +202,7 @@ spec:
             COMMIT_CMD=${COMMIT_CMD}${endorsement_policy}
             eval ${COMMIT_CMD}
           fi
-              
+          tail -f /dev/null
         env:
         - name: CORE_VM_ENDPOINT
           value: unix:///host/var/run/docker.sock
