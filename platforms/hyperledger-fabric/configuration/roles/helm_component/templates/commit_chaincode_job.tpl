@@ -44,5 +44,5 @@ spec:
       name: {{ item.channel_name | lower }}
     endorsers:
       creator: {{ namespace }}
-      name: {% for name in item.endorsers.name %}{{ name }} {% endfor %} 
-      corepeeraddress: {% for address in item.endorsers.corepeeraddress %}{{ address }} {% endfor %} 
+      name: {% for participant in participants %}{{ participant.name }} {% endfor %} 
+      corepeeraddress: {% for participant in participants %}{% for peer in participant.peers %}{% if peer.type == 'validating' %}{{ peer.corepeerAddress }} {% endif %}{% endfor %}{% endfor %} 
