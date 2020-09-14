@@ -132,17 +132,9 @@ spec:
             OUTPUT_PATH="${MOUNT_PATH}/endorsers/$ns/msp"
             echo $OUTPUT_PATH
 
-            LOOKUP_SECRET_RESPONSE=$(curl -sS  \
-              --header "X-Vault-Token: ${VAULT_CLIENT_TOKEN}" \
-              ${VAULT_ADDR}/v1/${vault_secret_key} | jq -r 'if .errors then . else . end')
-            validateVaultResponse "secret (${vault_secret_key})" "${LOOKUP_SECRET_RESPONSE}"
-
-            CACERTS=$(echo ${LOOKUP_SECRET_RESPONSE} | jq -r '.data["cacerts"]')
-
-            mkdir -p ${OUTPUT_PATH}/cacerts
-            echo "${CACERTS}" >> ${OUTPUT_PATH}/cacerts/ca.crt
-            cat ${OUTPUT_PATH}/cacerts/ca.crt
           done
+
+          tail -f /dev/null
           
         volumeMounts:
         {{ if .Values.vault.tls  }}
@@ -164,44 +156,26 @@ spec:
           #!/bin/bash sh
           echo $COMMIT_ARGUMENTS>COMMIT_ARGUMENTS.txt
           COMMIT_ARGUMENTS=$(< COMMIT_ARGUMENTS.txt)
-
-          tail -f /dev/null
-          COMMIT_CMD="peer lifecycle chaincode commit -o ${ORDERER_URL} --tls ${CORE_PEER_TLS_ENABLED} --cafile $ORDERER_CA --peerAddresses ${CORE_PEER_ADDRESS} -tlsRootCertFiles ${CORE_PEER_TLS_ROOTCERT_FILE} --channelID $CHANNEL_NAME --name ${CHAINCODE_NAME} --version ${CHAINCODE_VERSION} --sequence 1 --init-required"
           
-          for item in $ENDORSERS_CORE_PEER_ADDR
-          do
-            COMMIT_CMD=${COMMIT_CMD}" --peerAddresses "${item}
-          done
-
-          echo ${COMMIT_CMD}
-
-          for item in $ENDORSING_ORG_NAMES
-          do
-            path="/opt/gopath/src/github.com/hyperledger/fabric/crypto/endorsers/${ns}/users/admin/msp/ca.crt"
-            COMMIT_CMD=${COMMIT_CMD}" --tlsRootCertFiles "${path}
-          done
-
-          echo ${COMMIT_CMD}
-
           if [ -z ${ENDORSEMENT_POLICIES} ]
           then
             ## check commit rediness
-            echo "peer query commitreadiness"
-            peer lifecycle chaincode checkcommitreadiness --channelID ${CHANNEL_NAME} --name ${CHAINCODE_NAME} --version ${CHAINCODE_VERSION} --sequence 1 --init-required --output json
+            echo "peer query commitrediness"
+            #peer lifecycle chaincode checkcommitreadiness --channelID ${CHANNEL_NAME} --name ${CHAINCODE_NAME} --version ${CHAINCODE_VERSION} --sequence 1 --init-required --output json
             ## commit chaincode
             echo "peer query commit : Endorsement Policy null "
-            eval ${COMMIT_CMD}
+            #peer lifecycle chaincode commit -o ${ORDERER_URL} --tls ${CORE_PEER_TLS_ENABLED} --cafile $ORDERER_CA --peerAddresses ${CORE_PEER_ADDRESS} -tlsRootCertFiles ${CORE_PEER_TLS_ROOTCERT_FILE} --peerAddresses ${ENDORSER_PEER_ADDRESS} -tlsRootCertFiles ${ENDORSING_PEER_TLS_ROOTCERT_FILE} --channelID $CHANNEL_NAME --name ${CHAINCODE_NAME} --version ${CHAINCODE_VERSION} --sequence 1 --init-required 
           else
             ## check commit readiness
             echo "peer query commit readiness"
-            peer lifecycle chaincode checkcommitreadiness --channelID ${CHANNEL_NAME} --name ${CHAINCODE_NAME} --version ${CHAINCODE_VERSION} --sequence 1 --init-required --output json --signature-policy {{ $.Values.chaincode.endorsementpolicies | quote }} > log.txt
+            #peer lifecycle chaincode checkcommitreadiness --channelID ${CHANNEL_NAME} --name ${CHAINCODE_NAME} --version ${CHAINCODE_VERSION} --sequence 1 --init-required --output json --signature-policy {{ $.Values.chaincode.endorsementpolicies | quote }} > log.txt
             cat log.txt
             ## commit chaincode
             echo "peer query commit"
-            endorsement_policy=" --signature-policy ${ENDORSEMENT_POLICIES}"
-            COMMIT_CMD=${COMMIT_CMD}${endorsement_policy}
-            eval ${COMMIT_CMD}
+            #peer lifecycle chaincode commit -o ${ORDERER_URL} --tls ${CORE_PEER_TLS_ENABLED} --cafile $ORDERER_CA --peerAddresses ${CORE_PEER_ADDRESS} -tlsRootCertFiles ${CORE_PEER_TLS_ROOTCERT_FILE} --peerAddresses ${ENDORSER_PEER_ADDRESS} -tlsRootCertFiles ${ENDORSING_PEER_TLS_ROOTCERT_FILE} --channelID $CHANNEL_NAME --name ${CHAINCODE_NAME} --version ${CHAINCODE_VERSION} --sequence 1 --init-required --signature-policy {{ $.Values.chaincode.endorsementpolicies | quote }} > log.txt
+            cat log.txt
           fi
+              
         env:
         - name: CORE_VM_ENDPOINT
           value: unix:///host/var/run/docker.sock
@@ -236,11 +210,7 @@ spec:
         - name: CC_RUNTIME_LANGUAGE
           value: "{{ $.Values.chaincode.lang }}"
         - name: ENDORSEMENT_POLICIES
-          value: "{{ $.Values.chaincode.endorsementpolicies | quote }}"
-        - name: ENDORSERS_CORE_PEER_ADDR
-          value: "{{ $.Values.endorsers.corepeeraddress }}"
-        - name: ENDORSING_ORG_NAMES
-          value: "{{ $.Values.endorsers.name }}"
+          value: "{{ $.Values.chaincode.endorsementpolicies }}"
         volumeMounts:
         - name: certificates
           mountPath: /opt/gopath/src/github.com/hyperledger/fabric/crypto
