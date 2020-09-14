@@ -165,25 +165,43 @@ spec:
           #!/bin/bash sh
           echo $COMMIT_ARGUMENTS>COMMIT_ARGUMENTS.txt
           COMMIT_ARGUMENTS=$(< COMMIT_ARGUMENTS.txt)
-          
+
           tail -f /dev/null
+          COMMIT_CMD="peer lifecycle chaincode commit -o ${ORDERER_URL} --tls ${CORE_PEER_TLS_ENABLED} --cafile $ORDERER_CA --peerAddresses ${CORE_PEER_ADDRESS} -tlsRootCertFiles ${CORE_PEER_TLS_ROOTCERT_FILE} --channelID $CHANNEL_NAME --name ${CHAINCODE_NAME} --version ${CHAINCODE_VERSION} --sequence 1 --init-required"
+          
+          for item in $ENDORSERS_CORE_PEER_ADDR
+          do
+            COMMIT_CMD=${COMMIT_CMD}" --peerAddresses "${item}
+          done
+
+          echo ${COMMIT_CMD}
+
+          for item in $ENDORSING_ORG_NAMES
+          do
+            path="/opt/gopath/src/github.com/hyperledger/fabric/crypto/endorsers/${ns}/msp/cacerts/ca.crt"
+            COMMIT_CMD=${COMMIT_CMD}" --tlsRootCertFiles "${path}
+          done
+
+          echo ${COMMIT_CMD}
+
           if [ -z ${ENDORSEMENT_POLICIES} ]
           then
             ## check commit rediness
-            echo "peer query commitrediness"
-            #peer lifecycle chaincode checkcommitreadiness --channelID ${CHANNEL_NAME} --name ${CHAINCODE_NAME} --version ${CHAINCODE_VERSION} --sequence 1 --init-required --output json
+            echo "peer query commitreadiness"
+            peer lifecycle chaincode checkcommitreadiness --channelID ${CHANNEL_NAME} --name ${CHAINCODE_NAME} --version ${CHAINCODE_VERSION} --sequence 1 --init-required --output json
             ## commit chaincode
             echo "peer query commit : Endorsement Policy null "
-            #peer lifecycle chaincode commit -o ${ORDERER_URL} --tls ${CORE_PEER_TLS_ENABLED} --cafile $ORDERER_CA --peerAddresses ${CORE_PEER_ADDRESS} -tlsRootCertFiles ${CORE_PEER_TLS_ROOTCERT_FILE} --peerAddresses ${ENDORSER_PEER_ADDRESS} -tlsRootCertFiles ${ENDORSING_PEER_TLS_ROOTCERT_FILE} --channelID $CHANNEL_NAME --name ${CHAINCODE_NAME} --version ${CHAINCODE_VERSION} --sequence 1 --init-required 
+            eval ${COMMIT_CMD}
           else
             ## check commit readiness
             echo "peer query commit readiness"
-            #peer lifecycle chaincode checkcommitreadiness --channelID ${CHANNEL_NAME} --name ${CHAINCODE_NAME} --version ${CHAINCODE_VERSION} --sequence 1 --init-required --output json --signature-policy {{ $.Values.chaincode.endorsementpolicies | quote }} > log.txt
+            peer lifecycle chaincode checkcommitreadiness --channelID ${CHANNEL_NAME} --name ${CHAINCODE_NAME} --version ${CHAINCODE_VERSION} --sequence 1 --init-required --output json --signature-policy {{ $.Values.chaincode.endorsementpolicies | quote }} > log.txt
             cat log.txt
             ## commit chaincode
             echo "peer query commit"
-            #peer lifecycle chaincode commit -o ${ORDERER_URL} --tls ${CORE_PEER_TLS_ENABLED} --cafile $ORDERER_CA --peerAddresses ${CORE_PEER_ADDRESS} -tlsRootCertFiles ${CORE_PEER_TLS_ROOTCERT_FILE} --peerAddresses ${ENDORSER_PEER_ADDRESS} -tlsRootCertFiles ${ENDORSING_PEER_TLS_ROOTCERT_FILE} --channelID $CHANNEL_NAME --name ${CHAINCODE_NAME} --version ${CHAINCODE_VERSION} --sequence 1 --init-required --signature-policy {{ $.Values.chaincode.endorsementpolicies | quote }} > log.txt
-            cat log.txt
+            endorsement_policy=" --signature-policy ${ENDORSEMENT_POLICIES}"
+            COMMIT_CMD=${COMMIT_CMD}${endorsement_policy}
+            eval ${COMMIT_CMD}
           fi
               
         env:
@@ -221,6 +239,10 @@ spec:
           value: "{{ $.Values.chaincode.lang }}"
         - name: ENDORSEMENT_POLICIES
           value: "{{ $.Values.chaincode.endorsementpolicies }}"
+        - name: ENDORSERS_CORE_PEER_ADDR
+          value: "{{ $.Values.endorsers.corepeeraddress }}"
+        - name: ENDORSING_ORG_NAMES
+          value: "{{ $.Values.endorsers.name }}"
         volumeMounts:
         - name: certificates
           mountPath: /opt/gopath/src/github.com/hyperledger/fabric/crypto
