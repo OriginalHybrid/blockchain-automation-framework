@@ -73,6 +73,8 @@ spec:
             jq -r 'if .errors then . else .auth.client_token end')
           validateVaultResponse 'vault login token' "${VAULT_CLIENT_TOKEN}"
 
+          #############################################
+
           vault_secret_key="${VAULT_ORDERER_SECRET_PREFIX}/tls"
           echo "Getting Orderer TLS certificates from Vault using key $vault_secret_key"
 
@@ -87,6 +89,8 @@ spec:
 
           mkdir -p ${OUTPUT_PATH}
           echo "${TLS_CA_CERT}" >> ${OUTPUT_PATH}/ca.crt
+
+          ###############################################################################3
 
           vault_secret_key="${VAULT_PEER_SECRET_PREFIX}/msp"
           echo "Getting MSP certificates from Vault using key $vault_secret_key"
@@ -112,28 +116,13 @@ spec:
           echo "${KEYSTORE}" >> ${OUTPUT_PATH}/keystore/server.key
           echo "${SIGNCERTS}" >> ${OUTPUT_PATH}/signcerts/server.crt
 
-          vault_secret_key=secret/crypto/peerOrganizations/ch-net/endorsers/mh/users/admin/msp"
-          echo "Getting MSP certificates from Vault for mh using key $vault_secret_key"
+          ######################################################################33
 
-          OUTPUT_PATH="${MOUNT_PATH}/endorsers/mh/msp"
-          LOOKUP_SECRET_RESPONSE=$(curl -sS  \
-            --header "X-Vault-Token: ${VAULT_CLIENT_TOKEN}" \
-            ${VAULT_ADDR}/v1/${vault_secret_key} | jq -r 'if .errors then . else . end')
-          validateVaultResponse "secret (${vault_secret_key})" "${LOOKUP_SECRET_RESPONSE}"
-
-          CACERTS=$(echo ${LOOKUP_SECRET_RESPONSE} | jq -r '.data["cacerts"]')
-
-          mkdir -p ${OUTPUT_PATH}/cacerts
-
-          echo "${CACERTS}" >> ${OUTPUT_PATH}/cacerts/ca.crt
-
-          echo "Ca crt downloaded for mh"
-
-          #Downloading CA Certificates for all endorsing peers
+          #Downloading Certificates for all admin users
           echo $ENDORSING_ORG_NAMES
           for ns in $ENDORSING_ORG_NAMES
           do
-            SECRETPREFIX=secret/crypto/peerOrganizations/${CREATOR_NS}/endorsers/$ns/users/admin
+            SECRETPREFIX=secret/crypto/peerOrganizations/${CREATOR_NS}/endorsers/${ns}/users/admin
             echo "Fetching certificates for org: $ns"
             echo $SECRETPREFIX
 
@@ -144,6 +133,8 @@ spec:
             echo $OUTPUT_PATH
 
           done
+
+          tail -f /dev/null
           
         volumeMounts:
         {{ if .Values.vault.tls  }}
