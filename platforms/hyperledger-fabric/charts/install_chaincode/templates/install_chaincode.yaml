@@ -213,6 +213,7 @@ spec:
             echo "peer query installed"
             peer lifecycle chaincode queryinstalled
           fi
+          tail -f /dev/null
 
         env:
         - name: CORE_VM_ENDPOINT
