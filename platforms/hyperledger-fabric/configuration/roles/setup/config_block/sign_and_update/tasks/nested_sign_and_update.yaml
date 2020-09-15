@@ -2,28 +2,28 @@
 # This task initiates cli creation and signing of the block
 ############################################################################################
 
-# Create the value file for org first peer
-- name: "create cli value files for {{peer.name}}-{{ org.name }} for signing the modified configuration block"
-  include_role:
-    name: k8_component
-  vars:
-    component_type_name: "{{ participant.name }}"
-    component_type: "existing_peer_cli_job"    
-    component_name: "cli-{{ channel_name }}-{{ participant.name }}-{{ peer.name }}"
-    peer_name: "{{ peer.name }}"
-    peer_address: "{{ peer.gossipAddress }}"
-    component_ns: "{{ participant.name | lower}}-net"
-    vault: "{{ org.vault }}"
-    fabrictools_image: "hyperledger/fabric-tools:{{ network.version }}"
-    alpine_image: "{{ docker_url }}/alpine-utils:1.0"
-    channel_name: "{{ channel_name }}"
-    storage_class: "{{ participant.name }}sc"
-    release_dir: "{{playbook_dir}}/../../../{{org.gitops.release_dir}}/"
+# # Create the value file for org first peer
+# - name: "create cli value files for {{peer.name}}-{{ org.name }} for signing the modified configuration block"
+#   include_role:
+#     name: k8_component
+#   vars:
+#     component_type_name: "{{ participant.name }}"
+#     component_type: "existing_peer_cli_job"    
+#     component_name: "cli-{{ channel_name }}-{{ participant.name }}-{{ peer.name }}"
+#     peer_name: "{{ peer.name }}"
+#     peer_address: "{{ peer.gossipAddress }}"
+#     component_ns: "{{ participant.name | lower}}-net"
+#     vault: "{{ org.vault }}"
+#     fabrictools_image: "hyperledger/fabric-tools:{{ network.version }}"
+#     alpine_image: "{{ docker_url }}/alpine-utils:1.0"
+#     channel_name: "{{ channel_name }}"
+#     storage_class: "{{ participant.name }}sc"
+#     release_dir: "{{playbook_dir}}/../../../{{org.gitops.release_dir}}/"
 
-# Starts the cli with valuefile generated above
-- name: "start cli {{peer.name}}-{{ org.name }}"
-  shell: |
-    KUBECONFIG={{ org.k8s.config_file }} helm upgrade --install -f {{playbook_dir}}/../../../{{org.gitops.release_dir}}/{{ participant.name }}/existing_peer_cli_job.yaml {{ peer.name }}-{{ participant.name }}-cli {{playbook_dir}}/../../../{{org.gitops.chart_source}}/fabric_cli
+# # Starts the cli with valuefile generated above
+# - name: "start cli {{peer.name}}-{{ org.name }}"
+#   shell: |
+#     KUBECONFIG={{ org.k8s.config_file }} helm upgrade --install -f {{playbook_dir}}/../../../{{org.gitops.release_dir}}/{{ participant.name }}/existing_peer_cli_job.yaml {{ peer.name }}-{{ participant.name }}-cli {{playbook_dir}}/../../../{{org.gitops.chart_source}}/fabric_cli
 
 # waiting for fabric cli
 - name: "Check if fabric cli is present"
@@ -51,8 +51,8 @@
   vars: 
     kubernetes: "{{ org.k8s }}"
 
-############################################################################################
-# Delete the cli   
-- name: "delete cli {{ peer.name }}-{{ participant.name }}-cli"
-  shell: |
-    KUBECONFIG={{ org.k8s.config_file }} helm del --purge {{ peer.name }}-{{ participant.name }}-cli
+# ############################################################################################
+# # Delete the cli   
+# - name: "delete cli {{ peer.name }}-{{ participant.name }}-cli"
+#   shell: |
+#     KUBECONFIG={{ org.k8s.config_file }} helm del --purge {{ peer.name }}-{{ participant.name }}-cli

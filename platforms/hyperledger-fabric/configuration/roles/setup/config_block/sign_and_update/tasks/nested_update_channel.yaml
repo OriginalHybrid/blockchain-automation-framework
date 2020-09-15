@@ -1,24 +1,24 @@
 ############################################################################################
 # This task initiates the nested sign and update
 
-# Creeate the value file for creater org first peer
-- name: "start cli for {{ peer.name }}-{{ org.name }} for updating the channel"
-  shell: |
-    KUBECONFIG={{ org.k8s.config_file }} helm upgrade --install -f {{playbook_dir}}/../../../{{org.gitops.release_dir}}/{{ participant.name }}/existing_peer_cli_job.yaml {{ peer.name }}-{{ participant.name }}-cli {{playbook_dir}}/../../../{{org.gitops.chart_source}}/fabric_cli
+# # Creeate the value file for creater org first peer
+# - name: "start cli for {{ peer.name }}-{{ org.name }} for updating the channel"
+#   shell: |
+#     KUBECONFIG={{ org.k8s.config_file }} helm upgrade --install -f {{playbook_dir}}/../../../{{org.gitops.release_dir}}/{{ participant.name }}/existing_peer_cli_job.yaml {{ peer.name }}-{{ participant.name }}-cli {{playbook_dir}}/../../../{{org.gitops.chart_source}}/fabric_cli
 
-# waiting for fabric cli
-- name: "Check if fabric cli is present"
-  k8s_info:
-    kind: Pod
-    namespace: "{{ org.name }}-net"
-    kubeconfig: "{{ org.k8s.config_file }}"
-    context: "{{ org.k8s.context }}"
-    label_selectors:
-      - app = cli
-  register: get_cli
-  until: ("Running" in get_cli|json_query('resources[*].status.phase'))
-  retries: "{{ network.env.retry_count }}"
-  delay: 40
+# # waiting for fabric cli
+# - name: "Check if fabric cli is present"
+#   k8s_info:
+#     kind: Pod
+#     namespace: "{{ org.name }}-net"
+#     kubeconfig: "{{ org.k8s.config_file }}"
+#     context: "{{ org.k8s.context }}"
+#     label_selectors:
+#       - app = cli
+#   register: get_cli
+#   until: ("Running" in get_cli|json_query('resources[*].status.phase'))
+#   retries: "{{ network.env.retry_count }}"
+#   delay: 40
 
 ############################################################################################
 # This task updates the blockchain after signature from the first peer of the creator
@@ -33,8 +33,8 @@
     kubernetes: "{{ org.k8s }}"
   register: update_channel
 
-############################################################################################
-# Delete the cli   
-- name: "delete cli {{ peer.name }}-{{ participant.name }}-cli"
-  shell: |
-    KUBECONFIG={{ org.k8s.config_file }} helm del --purge {{ peer.name }}-{{ participant.name }}-cli
+# ############################################################################################
+# # Delete the cli   
+# - name: "delete cli {{ peer.name }}-{{ participant.name }}-cli"
+#   shell: |
+#     KUBECONFIG={{ org.k8s.config_file }} helm del --purge {{ peer.name }}-{{ participant.name }}-cli
