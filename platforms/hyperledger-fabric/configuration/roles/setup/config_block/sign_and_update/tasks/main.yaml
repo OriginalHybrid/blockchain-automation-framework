@@ -10,6 +10,16 @@
   loop: "{{ item | json_query(channelcreator_query) }}"
   loop_control:
     loop_var: peer
+
+  # Create CLI pod for new Org peer
+- include_role:
+    name: "create/cli_pod"
+  vars:
+    peers: "{{ org.services.peers | first }}"
+    loop: "{{ network.organizations }}"
+    loop_control:
+      loop_var: org
+  when: network.organizations is defined  and org.type == "peer" and org.org_status == 'new'
   
 # Task for creating the cli for first peer of each organization
 # Config block gets signed by the admin of every organization
