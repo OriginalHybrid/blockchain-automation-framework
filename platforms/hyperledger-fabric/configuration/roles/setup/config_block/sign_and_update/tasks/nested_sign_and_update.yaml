@@ -25,6 +25,16 @@
 #   shell: |
 #     KUBECONFIG={{ org.k8s.config_file }} helm upgrade --install -f {{playbook_dir}}/../../../{{org.gitops.release_dir}}/{{ participant.name }}/existing_peer_cli_job.yaml {{ peer.name }}-{{ participant.name }}-cli {{playbook_dir}}/../../../{{org.gitops.chart_source}}/fabric_cli
 
+  # Create CLI pod for peers
+- include_role:
+    name: "create/cli_pod"
+  vars:
+    peers: "{{ org.services.peers }}"
+    loop: "{{ network.organizations }}"
+    loop_control:
+      loop_var: org
+  when: network.organizations is defined  and org.type == "peer" and org.org_status == 'new'
+
 # waiting for fabric cli
 - name: "Check if fabric cli is present"
   k8s_info:
