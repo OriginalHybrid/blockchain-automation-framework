@@ -140,7 +140,6 @@ spec:
         command: ["sh", "-c"]
         args:
         - |-
-          #!/bin/bash
           ## Git repository clone for chaincode
           mkdir -p /root/.ssh/          
           apk add curl openssh
@@ -197,8 +196,7 @@ spec:
             ls $CC_SRC_PATH
           fi
 
-          if [[ "${NETWORK_VERSION}" == '1.4.'* ]]
-          then
+          if [[ "${NETWORK_VERSION}" == '1.4'* ]];then
             echo ${NETWORK_VERSION} 
             ## Installing chaincode on a peer
             echo "inside 1.4"
