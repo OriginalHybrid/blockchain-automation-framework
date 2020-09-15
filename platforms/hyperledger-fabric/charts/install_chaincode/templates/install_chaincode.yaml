@@ -197,6 +197,8 @@ spec:
             ls $CC_SRC_PATH
           fi
 
+          echo "${NETWORK_VERSION} Before if"
+
           if [[ "${NETWORK_VERSION}" == '1.4'* ]];then
             echo ${NETWORK_VERSION} 
             ## Installing chaincode on a peer
