@@ -201,6 +201,7 @@ spec:
           then
             echo ${NETWORK_VERSION} 
             ## Installing chaincode on a peer
+            echo "inside 1.4"
             peer chaincode install -n ${CHAINCODE_NAME} -v ${CHAINCODE_VERSION} -p ${CC_SRC_PATH} --lang ${CC_RUNTIME_LANGUAGE}
             echo "Chaincode install for Fabric v.1.4.4"         
           else
