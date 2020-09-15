@@ -199,7 +199,8 @@ spec:
 
           echo "${NETWORK_VERSION} Before if"
 
-          if [[ "${NETWORK_VERSION}" == 1.4* ]];then
+          /bin/bash
+          if [[ "${NETWORK_VERSION}" == '1.4'* ]];then
             echo ${NETWORK_VERSION} 
             ## Installing chaincode on a peer
             peer chaincode install -n ${CHAINCODE_NAME} -v ${CHAINCODE_VERSION} -p ${CC_SRC_PATH} --lang ${CC_RUNTIME_LANGUAGE}
