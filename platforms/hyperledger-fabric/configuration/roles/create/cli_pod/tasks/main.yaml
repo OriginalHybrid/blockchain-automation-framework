@@ -12,7 +12,7 @@
     name: helm_component
   vars:
     name: "cli"
-    component_name: "{{ org.name | lower}}-cli"
+    component_name: "{{ peer.name }}-{{ org.name | lower}}-cli"
     orderer_image: "hyperledger/fabric-orderer:{{ network.version }}"
     alpine_image: "{{ docker_url }}/alpine-utils:1.0"  
     orderer: "{{ network.orderers | first }}"
