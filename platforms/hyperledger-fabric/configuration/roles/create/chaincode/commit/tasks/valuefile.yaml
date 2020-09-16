@@ -39,7 +39,7 @@
   vars:
     namespace: "{{ org.name |lower }}-net"
     vault: "{{ org.vault }}"
-  loop: "{{ item.endorsers.name }}"
+  loop: "{{ participants }}"
   loop_control:
     loop_var: endorser
 
