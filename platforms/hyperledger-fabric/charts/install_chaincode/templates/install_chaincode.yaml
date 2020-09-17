@@ -213,7 +213,6 @@ spec:
             echo "peer query installed"
             peer lifecycle chaincode queryinstalled
           fi
-
         env:
         - name: CORE_VM_ENDPOINT
           value: unix:///host/var/run/docker.sock

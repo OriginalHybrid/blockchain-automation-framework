@@ -124,6 +124,7 @@ spec:
         command: ["sh", "-c"]
         args:
         - |-
+          #!/bin/bash
           export ARGS='{"Args":'"'["${INSTANTIATION_ARGUMENTS}"]'"'}'
           export qARGS="'${ARGS}'"
           touch ./invokeChaincode.sh

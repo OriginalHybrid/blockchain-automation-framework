@@ -74,7 +74,6 @@ spec:
           validateVaultResponse 'vault login token' "${VAULT_CLIENT_TOKEN}"
 
           #############################################
-
           vault_secret_key="${VAULT_ORDERER_SECRET_PREFIX}/tls"
           echo "Getting Orderer TLS certificates from Vault using key $vault_secret_key"
 
@@ -91,7 +90,6 @@ spec:
           echo "${TLS_CA_CERT}" >> ${OUTPUT_PATH}/ca.crt
 
           ###############################################################################3
-
           vault_secret_key="${VAULT_PEER_SECRET_PREFIX}/msp"
           echo "Getting MSP certificates from Vault using key $vault_secret_key"
 
@@ -144,7 +142,6 @@ spec:
             cat ${OUTPUT_PATH}/cacerts/ca.crt
           done
 
-          
         volumeMounts:
         {{ if .Values.vault.tls  }}
         - name: vaultca
@@ -202,7 +199,6 @@ spec:
             COMMIT_CMD=${COMMIT_CMD}${endorsement_policy}
             eval ${COMMIT_CMD}
           fi
-          tail -f /dev/null
         env:
         - name: CORE_VM_ENDPOINT
           value: unix:///host/var/run/docker.sock

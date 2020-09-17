@@ -49,7 +49,7 @@
       file:
         path: "./build"
         state: absent
-
+        
     # This task invokes chaincode after the chaincode installation for the new organization to 
     # be added in existing network
     - include_role:
