@@ -146,16 +146,17 @@ spec:
             echo "Channel ${CHANNEL_NAME} is already created."
           else
             echo "Creating Channel ${CHANNEL_NAME}"
+            found=`echo $NETWORK_VERSION | grep -c 1.4`
             if [ "$tls_status" = "true" ]
             then
-              if [ $.Values.metadata.network.version == '1.4.4']
+              if [ $found = 1 ]
               then
                 peer channel create -o ${ORDERER_URL} -c ${CHANNEL_NAME} -f channel.tx --tls ${CORE_PEER_TLS_ENABLED} --cafile ${ORDERER_CA}
               else
                 peer channel create -o ${ORDERER_URL} -c ${CHANNEL_NAME} -f channel.tx --tls ${CORE_PEER_TLS_ENABLED} --cafile ${ORDERER_CA} --outputBlock /tmp/${CHANNEL_NAME}.block
               fi
             else
-              if [ $.Values.metadata.network.version == '1.4.4']
+              if [ $found = 1 ]
               then 
                 peer channel create -o ${ORDERER_URL} -c ${CHANNEL_NAME} -f channel.tx
               else

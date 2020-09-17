@@ -175,14 +175,11 @@ spec:
             gradle -v
             cd $GOPATH/src/github.com/chaincode && dep ensure
 
-            ls
             CC_SRC_PATH="/$GOPATH/src/github.com/chaincode/"
 
             echo "CC_SRC_PATH= $CC_SRC_PATH"
-            echo "pwd"
             current_path=`pwd`
             echo $current_path
-            ls $CC_SRC_PATH
 
             echo "Compiling Java code..."
             chmod +x gradlew
@@ -194,21 +191,20 @@ spec:
             CC_SRC_PATH=$CC_SRC_PATH/build/install/${CHAINCODE_NAME}
 
             echo $CC_SRC_PATH
-            ls $CC_SRC_PATH
           fi
-
-          if [ ${NETWORK_VERSION} = "1.4.4" ];then
-            echo ${NETWORK_VERSION} 
+          found=`echo $NETWORK_VERSION | grep -c 1.4`
+          if [ $found = 1 ];then
+            echo "Installing Chaincode for ${NETWORK_VERSION}"
             ## Installing chaincode on a peer
             peer chaincode install -n ${CHAINCODE_NAME} -v ${CHAINCODE_VERSION} -p ${CC_SRC_PATH} --lang ${CC_RUNTIME_LANGUAGE}
-            echo "Chaincode install for Fabric v.1.4.X"         
+            echo "Chaincode installed for Fabric v.1.4.X"         
           else
-            echo ${NETWORK_VERSION} 
+            echo "Installing Chaincode for ${NETWORK_VERSION}"
             ## packaging chaincode
             peer lifecycle chaincode package ${CHAINCODE_NAME}.tar.gz --path ${CC_SRC_PATH} --lang ${CC_RUNTIME_LANGUAGE} --label ${CHAINCODE_NAME}_${CHAINCODE_VERSION}
             ## Installing Chaincode
             peer lifecycle chaincode install ${CHAINCODE_NAME}.tar.gz
-            echo "Chaincode install for Fabric v.2.X"
+            echo "Chaincode installed for Fabric v.2.X"
             #query installed
             echo "peer query installed"
             peer lifecycle chaincode queryinstalled
