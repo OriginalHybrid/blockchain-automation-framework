@@ -62,6 +62,7 @@ network:
       - peer:
         name: peer0
         gossipAddress: peer0.carrier-net.org3ambassador.blockchaincloudpoc.com:8443  # External or internal URI of the gossip peer
+        corepeerAddress: peer0.carrier-net.org3ambassador.blockchaincloudpoc.com:8443 # core peer address
       ordererAddress: orderer1.org1ambassador.blockchaincloudpoc.com:8443             # External or internal URI of the orderer
     - organization:      
       name: store
@@ -71,6 +72,7 @@ network:
       - peer:
         name: peer0
         gossipAddress: peer0.store-net.org3ambassador.blockchaincloudpoc.com:8443
+        corepeerAddress: peer0.store-net.org3ambassador.blockchaincloudpoc.com:8443 # core peer address
       ordererAddress: orderer1.org1ambassador.blockchaincloudpoc.com:8443
     - organization:
       name: warehouse
@@ -80,6 +82,7 @@ network:
       - peer:
         name: peer0
         gossipAddress: peer0.warehouse-net.org2ambassador.blockchaincloudpoc.com:8443
+        corepeerAddress: peer0.warehouse-net.org2ambassador.blockchaincloudpoc.com:8443 # core peer address
       ordererAddress: orderer1.org1ambassador.blockchaincloudpoc.com:8443
     - organization:
       name: manufacturer
@@ -89,6 +92,7 @@ network:
       - peer:
         name: peer0
         gossipAddress: peer0.manufacturer-net.org2ambassador.blockchaincloudpoc.com:8443
+        corepeerAddress: peer0.manifacturer-net.org2ambassador.blockchaincloudpoc.com:8443 # core peer address
       ordererAddress: orderer1.org1ambassador.blockchaincloudpoc.com:8443
     genesis:
       name: OrdererGenesis  
