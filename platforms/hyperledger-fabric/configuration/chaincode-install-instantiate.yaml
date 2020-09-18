@@ -43,7 +43,7 @@
         docker_url: "{{ network.docker.url }}"
       loop: "{{ network['channels'] }}"
       when: add_new_org == 'false' and '2.' in network.version    
-
+        
     # This task invokes chaincode after the chaincode installation for the new organization to 
     # be added in existing network
     - include_role:

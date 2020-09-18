@@ -143,8 +143,6 @@ spec:
             echo "${CACERTS}" >> ${OUTPUT_PATH}/cacerts/ca.crt
             cat ${OUTPUT_PATH}/cacerts/ca.crt
           done
-
-          
         volumeMounts:
         {{ if .Values.vault.tls  }}
         - name: vaultca
