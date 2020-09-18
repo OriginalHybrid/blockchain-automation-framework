@@ -45,4 +45,4 @@ spec:
     endorsers:
       creator: {{ namespace }}
       name: {% for participant in participants %}{{ participant.name }} {% endfor %} 
-      corepeeraddress: {% for participant in participants %}{% for peer in participant.peers %}{% if peer.type == 'validating' %}{{ peer.corepeerAddress }} {% endif %}{% endfor %}{% endfor %} 
+      corepeeraddress: {% for participant in participants %}{% for peer in participant.peers %}{% if peer.type == 'validating' %}{{ peer.corepeerAddress }} {% endif %}{% endfor %}{% endfor %}

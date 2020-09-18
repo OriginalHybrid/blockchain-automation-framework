@@ -185,7 +185,7 @@ spec:
 
           if [ -z ${ENDORSEMENT_POLICIES} ]
           then
-            ## check commit rediness
+            ## check commit readiness
             echo "peer query commitreadiness"
             peer lifecycle chaincode checkcommitreadiness --channelID ${CHANNEL_NAME} --name ${CHAINCODE_NAME} --version ${CHAINCODE_VERSION} --sequence 1 --init-required --output json
             ## commit chaincode
@@ -202,7 +202,6 @@ spec:
             COMMIT_CMD=${COMMIT_CMD}${endorsement_policy}
             eval ${COMMIT_CMD}
           fi
-          tail -f /dev/null
         env:
         - name: CORE_VM_ENDPOINT
           value: unix:///host/var/run/docker.sock
