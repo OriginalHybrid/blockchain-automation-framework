@@ -41,6 +41,7 @@
       vars:
         participants: "{{ item.participants }}"
         docker_url: "{{ network.docker.url }}"
+        approvers: "{{ item.endorsers }}"
       loop: "{{ network['channels'] }}"
       when: add_new_org == 'false' and '2.' in network.version    
         

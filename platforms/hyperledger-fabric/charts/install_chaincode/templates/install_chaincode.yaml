@@ -192,8 +192,8 @@ spec:
 
             echo $CC_SRC_PATH
           fi
-          found=`echo $NETWORK_VERSION | grep -c 1.4`
-          if [ $found = 1 ];then
+          version1_4=`echo $NETWORK_VERSION | grep -c 1.4`
+          if [ $version1_4 = 1 ];then
             echo "Installing Chaincode for ${NETWORK_VERSION}"
             ## Installing chaincode on a peer
             peer chaincode install -n ${CHAINCODE_NAME} -v ${CHAINCODE_VERSION} -p ${CC_SRC_PATH} --lang ${CC_RUNTIME_LANGUAGE}
