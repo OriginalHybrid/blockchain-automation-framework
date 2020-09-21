@@ -1,0 +1,63 @@
+apiVersion: flux.weave.works/v1beta1
+kind: HelmRelease
+metadata:
+  name: ch-peer1
+  namespace: ch-net
+  annotations:
+    flux.weave.works/automated: "false"
+spec:
+  releaseName: ch-peer1
+  chart:
+    git: git@github.com:himanshulalarya/blockchain-automation-framework.git
+    ref: pr-clone
+    path: platforms/hyperledger-fabric/charts/peernode    
+  values:
+    metadata:
+      namespace: ch-net
+      images:
+        couchdb: hyperledger/fabric-couchdb:0.4.18
+        peer: hyperledger/fabric-peer:2.2.0
+        alpineutils: index.docker.io/hyperledgerlabs/alpine-utils:1.0
+        
+    peer:
+      name: peer1
+      gossippeeraddress: peer0.ch-net.hf.dev2.aws.blockchaincloudpoc-develop.com:8443
+      gossipexternalendpoint: peer1.ch-net.hf.dev2.aws.blockchaincloudpoc-develop.com:8443
+      localmspid: chMSP
+      loglevel: info
+      tlsstatus: true
+      builder: hyperledger/fabric-ccenv:2.2.0
+      couchdb:
+        username: ch-user
+
+    storage:
+      peer:
+        storageclassname: chsc
+        storagesize: 512Mi
+      couchdb:
+        storageclassname: chsc
+        storagesize: 1Gi
+
+    vault:
+      role: vault-role
+      address: http://ad284646d75e2490cbb3b1e255204705-1307850251.eu-west-1.elb.amazonaws.com:20002
+      authpath: ch-net-auth
+      secretprefix: secret/crypto/peerOrganizations/ch-net/peers/peer1.ch-net
+      secretambassador: secret/crypto/peerOrganizations/ch-net/ambassador
+      serviceaccountname: vault-auth
+      imagesecretname: regcred
+      secretcouchdbpass: secret/credentials/ch-net/couchdb/ch?user
+
+    service:
+      servicetype: ClusterIP
+      ports:
+        grpc:
+          clusteripport: 7051
+        events:
+          clusteripport: 7053
+        couchdb:
+          clusteripport: 5984
+          
+    proxy:
+      provider: haproxy
+      external_url_suffix: hf.dev2.aws.blockchaincloudpoc-develop.com
