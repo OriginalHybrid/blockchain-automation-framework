@@ -34,7 +34,7 @@
         participants: "{{ item.participants }}"
         docker_url: "{{ network.docker.url }}"
       loop: "{{ network['channels'] }}"
-      when: add_new_org == 'false' and '2.' in network.version   
+      when: participants is defined and '2.' in network.version
 
     - include_role:
         name: "create/chaincode/commit"

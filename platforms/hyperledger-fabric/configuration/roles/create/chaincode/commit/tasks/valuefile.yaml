@@ -39,9 +39,11 @@
   vars:
     namespace: "{{ org.name |lower }}-net"
     vault: "{{ org.vault }}"
-  loop: "{{ participants }}"
+    peers: "{{ organization.services.peers | first }}"
+  loop: "{{ network.organizations }}"
   loop_control:
-    loop_var: endorser
+    loop_var: organization
+  when: organization.type == 'peer'
 
 # Nested task for chaincode commit
 - name: "Create value file for chaincode commit"

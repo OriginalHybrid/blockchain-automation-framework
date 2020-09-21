@@ -44,5 +44,5 @@ spec:
       name: {{ item.channel_name | lower }}
     endorsers:
       creator: {{ namespace }}
-      name: {% for name in approvers.name %} name {% endfor %} 
-      corepeeraddress: {% for address in approvers.corepeerAddress %} address {% endfor %}
+      name: {% for name in approvers.name %} {{ name }} {% endfor %} 
+      corepeeraddress: {% for address in approvers.corepeerAddress %} {{ address }} {% endfor %}
