@@ -38,6 +38,7 @@
   when: existing_cli.resources|length == 0
 
 
+
 # waiting for fabric cli
 - name: "Check if fabric cli is present"
   k8s_info:
