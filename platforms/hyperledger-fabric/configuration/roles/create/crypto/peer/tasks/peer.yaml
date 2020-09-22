@@ -14,6 +14,7 @@
     dest: "{{ peer.certificate }}"
     follow: no
     force: yes
+  when: item.org_status == 'new'
   tags:
     - notest
 
