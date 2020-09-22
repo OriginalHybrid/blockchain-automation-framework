@@ -1,0 +1,24 @@
+metadata:
+  namespace: nh-net
+  images:
+    fabrictools: hyperledger/fabric-tools:2.2.0
+    alpineutils: index.docker.io/hyperledgerlabs/alpine-utils:1.0
+storage:
+  class: nhsc
+  size: 256Mi
+vault:
+  role: vault-role
+  address: http://vault.internal.dev2.aws.blockchaincloudpoc-develop.com:20001
+  authpath: nh-net-auth
+  adminsecretprefix: secret/crypto/peerOrganizations/nh-net/users/admin
+  orderersecretprefix: secret/crypto/peerOrganizations/nh-net/orderer
+  serviceaccountname: vault-auth
+  imagesecretname: regcred
+  tls: false
+peer:
+  name: peer0
+  localmspid: nhMSP
+  tlsstatus: true
+  address: peer0.nh-net.hf.dev2.aws.blockchaincloudpoc-develop.com:8443
+orderer:
+  address: orderer8.hf.dev2.aws.blockchaincloudpoc-develop.com:8443
