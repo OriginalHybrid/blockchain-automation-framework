@@ -1,59 +1,67 @@
-apiVersion: flux.weave.works/v1beta1
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
 kind: HelmRelease
 metadata:
   name: {{ component_name }}
   namespace: {{ component_ns }}
   annotations:
-    flux.weave.works/automated: "false"
+    fluxcd.io/automated: "false"
 spec:
   releaseName: {{ component_name }}
+  interval: 1m
   chart:
-    git: {{ git_url }}
-    ref: {{ git_branch }}
-    path: {{ charts_dir }}/node_constellation
+   spec:
+    chart: {{ charts_dir }}/node_constellation
+    sourceRef:
+      kind: GitRepository
+      name: flux-{{ network.env.type }}
+      namespace: flux-{{ network.env.type }}
   values:
     replicaCount: 1
     metadata:
       namespace: {{ component_ns }}
       labels:
     images:
-      node: quorumengineering/quorum:2.1.1
-      alpineutils: adopblockchaincloud0502.azurecr.io/alpine-utils:1.0
-      constellation: quorumengineering/constellation:0.3.2
+      node: quorumengineering/quorum:{{ network.version }}
+      alpineutils: {{ network.docker.url }}/alpine-utils:1.0
+      constellation: quorumengineering/constellation:{{ network.config.tm_version }}
     node:
       name: {{ peer.name }}
+{% if add_new_org %}
+{% if network.config.consensus == 'raft' %}
+      peer_id: {{ peer_id | int }}
+{% endif %}
+{% endif %}
+      status: {{ node_status }}
       consensus: {{ consensus }}
+      subject: {{ peer.subject }}
       mountPath: /etc/quorum/qdata
       imagepullsecret: regcred
       keystore: keystore_1
       servicetype: ClusterIP
+      lock: {{ peer.lock | lower }}
       ports:
         rpc: {{ peer.rpc.port }}
+{% if network.config.consensus == 'raft' %}
         raft: {{ peer.raft.port }}
+{% endif %}
         constellation: {{ peer.transaction_manager.port }}
         quorum: {{ peer.p2p.port }}
     vault:
       address: {{ vault.url }}
-      secretprefix: secret/{{ component_ns }}/crypto/{{ peer.name }}
+      secretprefix: {{ vault.secret_path | default('secretsv2') }}/{{ component_ns }}/crypto/{{ peer.name }}
       serviceaccountname: vault-auth
       keyname: quorum
-      tm_keyname: transaction
+      tm_keyname: tm
       role: vault-role
       authpath: quorum{{ name }}
     genesis: {{ genesis }}
-    staticnodes:
-{% if network.config.consensus == 'ibft' %}
-{% for enode in enode_data_list %}
-      - enode://{{ enode.enodeval }}@{{ enode.peer_name }}.{{ external_url }}:{{ enode.p2p_ambassador }}?discport=0
-{% endfor %}
-{% endif %}
-{% if network.config.consensus == 'raft' %}
-{% for enode in enode_data_list %}
-      - enode://{{ enode.enodeval }}@{{ enode.peer_name }}.{{ external_url }}:{{ enode.p2p_ambassador }}?discport=0&raftport={{ enode.raft_ambassador }}
-{% endfor %}
-{% endif %}
+    staticnodes: {{ staticnodes }}
     constellation:
-      url: {{ network.config.tm_nodes }}
+{% if network.config.tm_tls == 'strict' %}
+      url: https://{{ peer.name }}.{{ external_url }}:{{ peer.transaction_manager.ambassador }}/
+{% else %}
+      url: http://{{ peer.name }}.{{ external_url }}:{{ peer.transaction_manager.ambassador }}/
+{% endif %}
       storage: "bdb:/etc/quorum/qdata/database"
       tls: "{{ network.config.tm_tls }}"
       othernodes: {{ network.config.tm_nodes }}

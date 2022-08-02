@@ -1,6 +1,6 @@
 Key Concepts
 ============
-This section introduces the key concepts along with their features used within the Blockchain Automation Framework. This section works as step one that will pave the way for new users to understand the key conceptual building blocks used in the Blockchain Automation Framework's architecture design.
+This section introduces the key concepts along with their features used within Hyperledger Bevel. This section works as step one that will pave the way for new users to understand the key conceptual building blocks used in Hyperledger Bevel's architecture design.
 
 .. toctree::
    :maxdepth: 1
@@ -11,4 +11,3 @@ This section introduces the key concepts along with their features used within t
    keyConcepts/vault.md
    keyConcepts/gitops.md
    keyConcepts/features.md
-   keyConcepts/jenkins.md

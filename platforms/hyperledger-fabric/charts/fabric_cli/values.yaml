@@ -1,3 +1,9 @@
+##############################################################################################
+#  Copyright Accenture. All Rights Reserved.
+#
+#  SPDX-License-Identifier: Apache-2.0
+##############################################################################################
+
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
@@ -10,7 +16,7 @@ metadata:
     #Eg. fabrictools: hyperledger/fabric-tools:1.4.0
     fabrictools: 
     #Provide the valid image name and version to read certificates from vault server
-   #Eg.alpineutils: adopfrablockchain.azurecr.io/alpine-utils:1.0
+   #Eg.alpineutils: hyperledgerlabs/alpine-utils:1.0
     alpineutils: 
 
 

@@ -1,3 +1,9 @@
+##############################################################################################
+#  Copyright Accenture. All Rights Reserved.
+#
+#  SPDX-License-Identifier: Apache-2.0
+##############################################################################################
+
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
@@ -7,7 +13,7 @@ replicaCount: 1
 
 metadata:
   #Provide the namespace for the Quorum node
-  #Eg. namespace: example-com
+  #Eg. namespace: example-quo
   namespace: 
   #Provide the custom labels  
   #NOTE: Provide labels other than name, release name , release service, chart version , chart name, run
@@ -22,8 +28,8 @@ images:
   #Eg. node: quorumengineering/quorum:2.1.1
   node: quorumengineering/quorum:2.1.1
   #Provide the valid image name and version to read certificates from vault server 
-  #Eg. alpineutils: adopfrablockchain.azurecr.io/alpine-utils:1.0
-  alpineutils: adopblockchaincloud0502.azurecr.io/alpine-utils:1.0
+  #Eg. alpineutils: hyperledgerlabs/alpine-utils:1.0
+  alpineutils: hyperledgerlabs/alpine-utils:1.0
   #Provide the valid image name and version for quorum tessera
   #Eg. tessera: quorumengineering/tessera:0.9.2
   tessera: quorumengineering/tessera:0.9.2
@@ -36,6 +42,13 @@ node:
   #Provide the name for Quorum node
   #Eg. name: node-1
   name: 
+  #Provide the status of the node as default,additional
+  #Eg. status: default
+  status:
+  #Provide the id which is obtained when the new peer is added for raft consensus
+  #This field is only for RAFT consensus and only when a new node is added to existing network
+  #Eg. peer_id: 5
+  peer_id: 
   #Provide the consesus for the Quorum network
   # values can be 'raft' or 'ibft'
   #Eg. consensus: raft 
@@ -55,7 +68,7 @@ node:
   ports:
     rpc: 8546
     raft: 50401
-    tm: 9001
+    tm: 15013
     quorum: 21000
     db: 3306
   #Provide the mysql DB name
@@ -81,9 +94,6 @@ vault:
   #Provide the key name from where quorum secrets will be read
   #Eg. keyname: quorum
   keyname: 
-  #Provide the key name from where transaction-manager secrets will be read
-  #Eg. tm_keyname: transaction
-  tm_keyname: 
   #Provide the service role which is verified with Vault
   #Eg. role: vault-role
   role: 
@@ -102,12 +112,12 @@ tessera:
   #Eg. dbpassword: $password
   dbpassword:   
   #Provide the tessera node's own url. This should be local. Use http if tls is OFF
-  #Eg. url: "https://localhost:9001"
+  #Eg. url: "https://node1.quo.demo.aws.blockchaincloudpoc.com"
   url: 
   #Provide the list of tessera nodes to connect in url: <value> format. This should be reachable from this node
   #Eg. othernodes: 
-  #     - url: "https://node1.quo.demo.aws.blockchaincloudpoc.com:8443"
-  #     - url: "https://node2.quo.demo.aws.blockchaincloudpoc.com:8443"
+  #     - url: "https://node1.quo.demo.aws.blockchaincloudpoc.com"
+  #     - url: "https://node2.quo.demo.aws.blockchaincloudpoc.com"
   othernodes: 
   #Provide if tessera will use tls. 
   # Options:
@@ -147,7 +157,7 @@ proxy:
   #Eg. external_url: node1.quo.demo.aws.blockchaincloudpoc.com
   external_url: 
   # Following are the ports that are exposed externally via the proxy
-  portTM: 8443
+  portTM: 15013
   rpcport: 15030
   quorumport: 15031  
   portRaft: 15032

@@ -1,4 +1,4 @@
-pragma solidity 0.6.1;
+pragma solidity >0.6.0;
 pragma experimental ABIEncoderV2;
 
 import "./ProductContract.sol";
@@ -25,7 +25,6 @@ contract ContainerContract is ProductContract {
     }
 
     string[] public containerKeys;
-    Container[] public allContainers;
     mapping(string => Container) containerSupplyChain;
     mapping(string => Transaction[]) containerHistory;
 
@@ -39,7 +38,7 @@ contract ContainerContract is ProductContract {
         string memory _trackingID,
         string memory _lastScannedAt,
         string[] memory _counterparties
-    ) public returns (Container memory) {
+    ) public onlyManufacturer() returns (Container memory) {
         require(bytes(containerSupplyChain[_trackingID].trackingID).length <= 0, "HTTP 400: Container with this tracking ID already exists");
         uint256 _timestamp = block.timestamp;
         address _custodian = msg.sender;
@@ -50,7 +49,7 @@ contract ContainerContract is ProductContract {
         containerSupplyChain[_trackingID] = Container(_health, _misc, _custodian, _lastScannedAt,
             _trackingID, _timestamp, _containerID, _counterparties, _containerContents);
 
-        Transaction memory newTransaction = Transaction(_custodian,_lastScannedAt,_timestamp);
+        Transaction memory newTransaction = Transaction(_custodian,_timestamp, _lastScannedAt);
         containerHistory[_trackingID].push(newTransaction);
 
         return containerSupplyChain[_trackingID];
@@ -79,21 +78,26 @@ contract ContainerContract is ProductContract {
     /**
     * return container with updated custodian
     */
-    function updateContainerCustodian(string memory _containerID) public returns(string memory){
+    function updateContainerCustodian(string memory _containerID, string memory _lastScannedAt) public returns(string memory){
         require(bytes(containerSupplyChain[_containerID].trackingID).length > 0, "HTTP 404");
         require(bytes(containerSupplyChain[_containerID].containerID).length <= 0, "HTTP 404");
 
         string memory ourAddress = addressToString(msg.sender);
         bool isParticipant = false;
+        string memory lowercaseLongLat = _toLower(_lastScannedAt);
+        bytes memory yourIdentity = abi.encodePacked(ourAddress,",",lowercaseLongLat);
+
 
         for(uint i = 0; i < containerSupplyChain[_containerID].participants.length; i++ ){
             string memory participant = _toLower(containerSupplyChain[_containerID].participants[i]);
-            if(keccak256(abi.encodePacked((ourAddress))) == keccak256(abi.encodePacked((participant))) ) isParticipant = true;
+            if(keccak256(yourIdentity) == keccak256(abi.encodePacked((participant))) ) isParticipant = true;
         }
         require(isParticipant, "HTTP 404: your identity is not in participant list");
 
         containerSupplyChain[_containerID].custodian = msg.sender;
-        string memory _trackingID = containerSupplyChain[_containerID].trackingID;
+        containerSupplyChain[_containerID].lastScannedAt = _lastScannedAt;
+
+        string memory _containerTrackingID = containerSupplyChain[_containerID].trackingID;
 
         for (uint256 i = 0; i < containerSupplyChain[_containerID].containerContents.length; i++) {
             if (bytes(productSupplyChain[containerSupplyChain[_containerID].containerContents[i]].trackingID).length > 0) {
@@ -102,13 +106,15 @@ contract ContainerContract is ProductContract {
                     .custodian = msg.sender;
                 uint256 _timestamp = block.timestamp;
                 address _custodian = msg.sender;
-                string memory _lastScannedAt = containerSupplyChain[_containerID].lastScannedAt;
-                containerHistory[_trackingID].push(Transaction(_custodian, _lastScannedAt, _timestamp));
+
+                string memory _productID = containerSupplyChain[_containerID].containerContents[i];
+                //product custodian will get updated since it is being packaged into a container
+                updateCustodian(_productID, _lastScannedAt);
+                //Gets added to the containerHistory because of change in custodian
+                containerHistory[_containerTrackingID].push(Transaction(_custodian, _timestamp, _lastScannedAt));
 
             } else if (bytes(containerSupplyChain[containerSupplyChain[_containerID].containerContents[i]].trackingID).length > 0) {
-                updateContainerCustodian(
-                    containerSupplyChain[_containerID].containerContents[i]
-                );
+                updateContainerCustodian(containerSupplyChain[_containerID].containerContents[i], _lastScannedAt);
             }
         }
         return containerSupplyChain[_containerID].trackingID;
@@ -127,6 +133,10 @@ contract ContainerContract is ProductContract {
                                     containerSupplyChain[_trackableTrackingID].containerID = _containerTrackingID;
                                     containerSupplyChain[_trackableTrackingID].custodian = containerSupplyChain[_containerTrackingID].custodian;
                                     containerSupplyChain[_containerTrackingID].containerContents.push(_trackableTrackingID);
+
+                                    //Gets added to containerHistory
+                                    containerHistory[_containerTrackingID].push(Transaction(containerSupplyChain[_containerTrackingID].custodian, now,
+                                    containerSupplyChain[_containerTrackingID].lastScannedAt));
                                     return containerSupplyChain[_containerTrackingID].containerID;
                             }
                     }
@@ -153,11 +163,12 @@ contract ContainerContract is ProductContract {
     * an updated container list with the package removed
     */
     function unpackageTrackable(string memory _containerID, string memory _trackableID) public{
+
         require(bytes(containerSupplyChain[_containerID].trackingID).length > 0, "HTTP 400: container does not exist");
         require((bytes(productSupplyChain[_trackableID].trackingID).length > 0) ||
                 (bytes(containerSupplyChain[_trackableID].trackingID).length > 0), "HTTP 400: trackable does not exist");
 
-        require(containerSupplyChain[_trackableID].custodian == msg.sender, "HTTP 400: container custodian not same as sender address");
+        require(containerSupplyChain[_containerID].custodian == msg.sender, "HTTP 400: container custodian not same as sender address");
         require((productSupplyChain[_trackableID].custodian == msg.sender) ||
                 containerSupplyChain[_trackableID].custodian == msg.sender, "HTTP 400: trackable custodian not same as sender address");
 

@@ -1,3 +1,9 @@
+##############################################################################################
+#  Copyright Accenture. All Rights Reserved.
+#
+#  SPDX-License-Identifier: Apache-2.0
+##############################################################################################
+
 # This task checks if the istanbul-tools is already in place or not
 - name: Check istanbul
   stat:
@@ -15,6 +21,7 @@
   git:
     repo: "{{ istanbul.repo }}"
     version: master
+    force: yes
     dest: "{{ bin_install_dir }}/istanbul_repo"
   when: not ( repo_stat_result.stat.exists and istanbul_stat_result.stat.exists )
 
@@ -25,11 +32,12 @@
   when: istanbul_stat_result.stat.exists == False
 
 # This task creates the bin directory, if it doesn't exist, for storing the istanbul binary
-- name: Create bin directory
-  file:
+- name: "Create bin directory"
+  include_role:
+    name: "{{ playbook_dir }}/../../shared/configuration/roles/check/setup"
+  vars:
     path: "{{ bin_install_dir }}"
-    state: directory
-    recurse: yes
+    check: "ensure_dir"
   when: istanbul_stat_result.stat.exists == False
 
 # This task puts the istanbul binary to above created bin directory

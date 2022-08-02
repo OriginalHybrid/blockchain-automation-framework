@@ -1,16 +1,21 @@
-apiVersion: flux.weave.works/v1beta1
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
 kind: HelmRelease
 metadata:
-  name: {{ component_name }}
+  name: joinchannel-{{ peer.name }}-{{ component_name }}
   namespace: {{ component_ns }}
   annotations:
-    flux.weave.works/automated: "false"
+    fluxcd.io/automated: "false"
 spec:
-  releaseName: {{ component_name }}
+  interval: 1m
+  releaseName: joinchannel-{{ peer.name }}-{{ component_name }}
   chart:
-    git: {{ git_url }}
-    ref: {{ git_branch }}
-    path: {{ charts_dir }}/join_channel
+    spec:
+      interval: 1m
+      sourceRef:
+        kind: GitRepository
+        name: flux-{{ network.env.type }}
+        namespace: flux-{{ network.env.type }}
+      chart: {{ charts_dir }}/join_channel
   values:
     metadata:
       namespace: {{ component_ns }}
@@ -20,7 +25,11 @@ spec:
 
     peer:
       name: {{ peer_name }}
-      address: {{ peer.gossipAddress }}
+{% if network.env.proxy == 'none' %}
+      address: {{ peer.name }}.{{ component_ns }}:7051
+{% else %}
+      address: {{ peer.peerAddress }}
+{% endif %}
       localmspid: {{ org.name | lower}}MSP
       loglevel: debug
       tlsstatus: true
@@ -28,9 +37,9 @@ spec:
     vault:
       role: vault-role
       address: {{ vault.url }}
-      authpath: {{ component_ns }}-auth
-      adminsecretprefix: secret/crypto/peerOrganizations/{{ component_ns }}/users/admin
-      orderersecretprefix: secret/crypto/peerOrganizations/{{ component_ns }}/orderer
+      authpath: {{ network.env.type }}{{ component_ns }}-auth
+      adminsecretprefix: {{ vault.secret_path | default('secretsv2') }}/data/crypto/peerOrganizations/{{ component_ns }}/users/admin
+      orderersecretprefix: {{ vault.secret_path | default('secretsv2') }}/data/crypto/peerOrganizations/{{ component_ns }}/orderer
       serviceaccountname: vault-auth
       imagesecretname: regcred
 
@@ -38,4 +47,3 @@ spec:
       name: {{channel_name}}      
     orderer:
       address: {{ participant.ordererAddress }}
-

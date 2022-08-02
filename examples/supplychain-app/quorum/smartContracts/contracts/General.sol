@@ -1,28 +1,26 @@
-pragma solidity 0.6.1;
+pragma solidity >0.6.0;
 pragma experimental ABIEncoderV2;
 
 import "./ContainerContract.sol";
 
 contract General is ContainerContract {
 
-    event sendString(string);
-
-
     /**
     * @return whether a tracking ID is owned and if so whether the scanning user is the owner
     */
-    function scan(string memory _trackingID) public returns(string memory) {
-        if((containerSupplyChain[_trackingID].custodian == msg.sender) || productSupplyChain[_trackingID].custodian == msg.sender) {
-            emit sendString("status: owned");
-            return("{'status': 'owned'}");
+    function scan(string memory _trackingID) public view returns(string memory){
+        address containerCustodian = containerSupplyChain[_trackingID].custodian;
+        address productCustodian = productSupplyChain[_trackingID].custodian;
+        // Checking to see if msg.sender is the current custodian
+        if((containerCustodian == msg.sender) || productCustodian == msg.sender) {
+            return('owned');
         }
-        if((containerSupplyChain[_trackingID].custodian == address(0)) || productSupplyChain[_trackingID].custodian == address(0)) {
-            emit sendString("status: new");
-            return("{'status': 'new'}");
+        if((containerCustodian != msg.sender && (containerCustodian != address(0)) ||
+            productCustodian != msg.sender && productCustodian != address(0))) {
+            return('unowned');
         }
-        else {
-            emit sendString("status: unowned");
-            return("{'status': 'unowned'}");
+        else if((containerCustodian == address(0)) || productCustodian == address(0)) {
+             return('new');
         }
     }
     /**
@@ -39,7 +37,6 @@ contract General is ContainerContract {
             return containertotal;
         }
     }
-
     /**
     * @return an array of transactions for that trackingID, regardless if it is a container or product
     */

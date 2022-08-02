@@ -1,5 +1,11 @@
+##############################################################################################
+#  Copyright Accenture. All Rights Reserved.
+#
+#  SPDX-License-Identifier: Apache-2.0
+##############################################################################################
+
 kind: Deployment
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 metadata:
   name: {{ .Values.nodeName }}
   {{- if .Values.deployment.annotations }}
@@ -14,15 +20,24 @@ metadata:
     app.kubernetes.io/instance: {{ .Release.Name }}
 spec:
   replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ .Values.nodeName }}
+      helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+      app.kubernetes.io/managed-by: {{ .Release.Service }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      app: {{ .Values.nodeName }}
   strategy:
     type: Recreate
     rollingUpdate: null
   template:
     metadata:
       labels:
-        app: {{ .Values.nodeName }}
         app.kubernetes.io/name: {{ .Values.nodeName }}
-        app.kubernetes.io/instance: {{ .Release.Name }} 
+        helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+        app.kubernetes.io/managed-by: {{ .Release.Service }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app: {{ .Values.nodeName }}
     spec:
       hostname: {{ .Values.nodeName }}
       imagePullSecrets:

@@ -1,16 +1,20 @@
-apiVersion: flux.weave.works/v1beta1
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
 kind: HelmRelease
 metadata:
   name: {{ component_name }}db
   annotations:
-    flux.weave.works/automated: "false"
+    fluxcd.io/automated: "false"
   namespace: {{ component_ns }}
 spec:
   releaseName: {{ component_name }}db
+  interval: 1m
   chart:
-    path: {{ gitops.chart_source }}/h2
-    git: {{ gitops.git_ssh }}
-    ref: {{ gitops.branch }}
+    spec:
+      chart: {{ gitops.chart_source }}/h2
+      sourceRef:
+        kind: GitRepository
+        name: flux-{{ network.env.type }}
+        namespace: flux-{{ network.env.type }}
   values:
     replicaCount: 1
     nodeName: {{ component_name }}
@@ -18,7 +22,9 @@ spec:
       namespace: {{ component_ns }}
     image:
       containerName: {{ network.docker.url }}/h2:2018
+{% if network.docker.username is defined %}
       imagePullSecret: regcred
+{% endif %}
     resources:
       limits: "512Mi"
       requests: "512Mi"

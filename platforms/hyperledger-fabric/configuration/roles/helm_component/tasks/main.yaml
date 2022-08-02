@@ -1,3 +1,9 @@
+##############################################################################################
+#  Copyright Accenture. All Rights Reserved.
+#
+#  SPDX-License-Identifier: Apache-2.0
+##############################################################################################
+
 #############################################################################################
 # This role generates the value file for the helm releases 
 #############################################################################################
@@ -8,7 +14,6 @@
 - name: "Ensures {{ values_dir }}/{{ name }} dir exists"
   file:
     path: "{{ values_dir }}/{{ name }}"
-    recurse: yes
     state: directory
 
 ############################################################################################
@@ -31,4 +36,5 @@
     helmtemplate_type: "{{ type }}"
     chart_path: "{{ charts_dir }}"
     value_file: "{{ values_dir }}/{{ name }}/{{ component_name }}.yaml"
-
+  tags:
+    - notest

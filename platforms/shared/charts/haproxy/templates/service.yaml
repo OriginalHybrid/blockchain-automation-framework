@@ -1,3 +1,9 @@
+##############################################################################################
+#  Copyright Accenture. All Rights Reserved.
+#
+#  SPDX-License-Identifier: Apache-2.0
+##############################################################################################
+
 ---
 apiVersion: v1
 kind: Service
@@ -38,6 +44,6 @@ spec:
     protocol: TCP
     targetPort: 443
   - name: stat
-    port: 1936
+    port: 5061
     protocol: TCP
-    targetPort: 1936
+    targetPort: 5061

@@ -1,12 +1,19 @@
+##############################################################################################
+#  Copyright Accenture. All Rights Reserved.
+#
+#  SPDX-License-Identifier: Apache-2.0
+##############################################################################################
+
 ###################################################################################################
 # This role creates the deployment files for indy crypto generate job and pushes them to repository
 ###################################################################################################
 - name: "Wait for namespace creation for stewards"
   include_role:
-    name: check/k8_component
+    name: "{{ playbook_dir }}/../../shared/configuration/roles/check/k8_component"
   vars:
     component_type: "Namespace"
     component_name: "{{ component_ns }}"
+    type: "retry"
 
 # ---------------------------------------------------------------------
 # create image pull secrets
@@ -32,13 +39,8 @@
     name: "{{ playbook_dir }}/../../shared/configuration/roles/git_push"
   vars:
     GIT_DIR: "{{ playbook_dir }}/../../../"
-    GIT_REPO: "{{ gitops.git_push_url }}"
-    GIT_USERNAME: "{{ gitops.username }}"
-    GIT_EMAIL: "{{ gitops.email }}"
-    GIT_PASSWORD: "{{ gitops.password }}"
-    GIT_BRANCH: "{{ gitops.branch }}"
     GIT_RESET_PATH: "platforms/hyperledger-indy/configuration"
-    msg: "Pushing deployment files for {{ organization }}"
+    msg: "[ci skip] Pushing deployment files for {{ organization }}"
 
 # ---------------------------------------------------------------------
 # check Vault for correct inserted indy crypto

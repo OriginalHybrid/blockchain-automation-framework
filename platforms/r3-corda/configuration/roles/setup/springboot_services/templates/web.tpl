@@ -1,9 +1,9 @@
-apiVersion: flux.weave.works/v1beta1
+apiVersion: helm.fluxcd.io/v1
 kind: HelmRelease
 metadata:
   name: {{ config.name }}-web
   annotations:
-    flux.weave.works/automated: "false"
+    fluxcd.io/automated: "false"
   {{ config.metadata | to_nice_yaml | indent(2) }}
 spec:
   releaseName: {{ config.name }}-web
@@ -15,9 +15,11 @@ spec:
     metadata:
       {{ config.metadata | to_nice_yaml | indent(6) }}
     image:
-      containerName: hyperledgerlabs/corda:3.3.0-corda-webserver-test-20190219
-      initContainerName: hyperledgerlabs/alpine-utils:1.0
+      containerName: {{ network.docker.url }}/corda:3.3.0-corda-webserver-test-20190219
+      initContainerName: {{ network.docker.url }}/alpine-utils:1.0
+{% if network.docker.username is defined %}
       imagePullSecret: regcred
+{% endif %}
     nodeConf:
       {{  config['spec']['values'].nodeConf | to_nice_yaml | indent(6) }}
       useSSL: false

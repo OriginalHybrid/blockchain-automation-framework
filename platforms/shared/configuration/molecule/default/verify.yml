@@ -1,3 +1,9 @@
+##############################################################################################
+#  Copyright Accenture. All Rights Reserved.
+#
+#  SPDX-License-Identifier: Apache-2.0
+##############################################################################################
+
 ---
 - name: Verify
   hosts: localhost
@@ -29,12 +35,11 @@
     assert:
       that: vault_stat_result.stat.exists
   - name: check aws cli
-    stat:
-      path: "{{ bin_install_dir }}/aws"
+    command: aws --version
     register: aws_cli_stat_result
   - name: Assert AWS cli has been installed
     assert:
-      that: aws_cli_stat_result.stat.exists
+      that: not aws_cli_stat_result.failed
   - name: check aws-authenticator
     stat:
       path: "{{ bin_install_dir }}/aws-iam-authenticator"
@@ -42,17 +47,3 @@
   - name: Assert AWS authenticator has been installed
     assert:
       that:  aws_auth_stat_result.stat.exists
-  - name: Check Tiller on Kubernetes clusters
-    k8s_info:
-      kind: Pod
-      namespace: kube-system
-      kubeconfig: "{{ kubeconfig_path }}"
-      context: "{{ kubecontext }}"
-      label_selectors:
-        - app = helm
-      field_selectors:
-        - status.phase=Running
-    register: tiller_status
-  - name: Assert Tiller has been installed
-    assert:
-      that: tiller_status.resources|length == 1

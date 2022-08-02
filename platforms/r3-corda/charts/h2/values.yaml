@@ -1,3 +1,9 @@
+##############################################################################################
+#  Copyright Accenture. All Rights Reserved.
+#
+#  SPDX-License-Identifier: Apache-2.0
+##############################################################################################
+
 # Default values for nodechart.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
@@ -8,10 +14,10 @@ nodeName:
 
 image:
   #Provide the name of image for container
-  #Eg. containerName: adopfrablockchain.azurecr.io/h2:2018
+  #Eg. containerName: hyperledgerlabs/h2:2018
   containerName: 
   #Provide the name of image for init container
-  #Eg. name: adopfrablockchain.azurecr.io/alpine-utils:1.0
+  #Eg. name: hyperledgerlabs/alpine-utils:1.0
   initContainerName: 
   #Provide the image pull secret of image
   #Eg. pullSecret: regcred

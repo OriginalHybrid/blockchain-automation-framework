@@ -1,3 +1,9 @@
+##############################################################################################
+#  Copyright Accenture. All Rights Reserved.
+#
+#  SPDX-License-Identifier: Apache-2.0
+##############################################################################################
+
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
@@ -7,7 +13,7 @@ replicaCount:
 
 metadata:
   #Provide the namespace for the Quorum node
-  #Eg. namespace: example-com
+  #Eg. namespace: example-quo
   namespace: 
   #Provide the custom labels  
   #NOTE: Provide labels other than name, release name , release service, chart version , chart name, run
@@ -22,8 +28,8 @@ images:
   #Eg. node: quorumengineering/quorum:2.1.1
   node: quorumengineering/quorum:2.1.1
   #Provide the valid image name and version to read certificates from vault server 
-  #Eg. alpineutils: adopfrablockchain.azurecr.io/alpine-utils:1.0
-  alpineutils: adopblockchaincloud0502.azurecr.io/alpine-utils:1.0
+  #Eg. alpineutils: hyperledgerlabs/alpine-utils:1.0
+  alpineutils: hyperledgerlabs/alpine-utils:1.0
   #Provide the valid image name and version for quorum constellation
   #Eg. constellation: quorumengineering/constellation:0.3.2
   constellation: quorumengineering/constellation:0.3.2
@@ -32,10 +38,20 @@ node:
   #Provide the name for Quorum node
   #Eg. name: node-1
   name: 
+  #Provide the status of the node as default,additional
+  #Eg. status: additional
+  status:
+  #Provide the id which is obtained when the new peer is added for raft consensus
+  #This field is only for RAFT consensus and only when a new node is added to existing network
+  #Eg. peer_id: 5
+  peer_id: 
   #Provide the consesus for the Quorum network
   # values can be 'raft' or 'ibft'
   #Eg. consensus: raft 
   consensus: 
+  #Provide additional node identity
+  #Eg. subject: "O=Warehouse,OU=Warehouse,L=42.36/-71.06/Boston,C=US"
+  subject:
   #Provide the mountpath for Quorum pod
   #Eg. mountPath: /etc/quorum/qdata
   mountPath: 
@@ -68,7 +84,7 @@ vault:
   #Eg. keyname: quorum
   keyname: 
   #Provide the key name from where transaction-manager secrets will be read
-  #Eg. tm_keyname: transaction
+  #Eg. tm_keyname: tm
   tm_keyname: 
   #Provide the service role which is verified with Vault
   #Eg. role: vault-role

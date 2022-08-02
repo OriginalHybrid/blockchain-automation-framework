@@ -1,33 +1,40 @@
+##############################################################################################
+#  Copyright Accenture. All Rights Reserved.
+#
+#  SPDX-License-Identifier: Apache-2.0
+##############################################################################################
+
 #########################
 # Playbook to create deployment files for namespaces, service account and clusterrolebinding
 # Playbook arguments: complete network.yaml
 #########################
 - hosts: ansible_provisioners
   gather_facts: no
+  no_log: "{{ no_ansible_log | default(false) }}"
   tasks:    
+  # Delete build directory
+  - name: Remove build directory
+    file:
+      path: "./build"
+      state: absent
+
   # ----------------------------------------------------------------------
   # Create Storageclass
   - name: Create Storage Class
     include_role:
       name: create/storageclass
-    vars:
-      storageclass_name: "{{ item.cloud_provider }}storageclass"
-      git_dir: "{{ item.gitops.release_dir }}"
-      org: "{{ item }}"
-      kubernetes: "{{ item.k8s }}"
     loop: "{{ network['organizations'] }}"
+    loop_control:
+      loop_var: org
     when: network['type'] == 'corda'
 
   # create namespace, service account and clusterrolebinding
-  - name: "Create namespace and vault auth"
+  - name: "Create namespace, service accounts and clusterrolebinding"
     include_role: 
       name: create/namespace_serviceaccount
-    vars:
-      component_ns: "{{ item.name | lower }}-ns"
-      organisation: "{{ item.name | lower }}"
-      kubernetes: "{{ item.k8s }}"
-      gitops: "{{ item.gitops }}"
     loop: "{{ network['organizations'] }}"
+    loop_control:
+      loop_var: org
     when: network['type'] == 'corda'  
 
   # ----------------------------------------------------------------------  
@@ -61,17 +68,18 @@
     when: network['type'] == 'corda' and item.type.find('nms') != -1
   
   # ----------------------------------------------------------------------  
-  # Wait for orderer services to respond  
-  - name: Check that orderer uri are reachable
+  # Wait for network services to respond  
+  - name: Check that network services uri are reachable
     uri:
       url: "{{ item.uri }}"
       validate_certs: no
     register: this
     until: this.status == 200 or this.status == 401
-    loop: "{{ network['orderers'] }}"
+    loop: "{{ network['network_services'] }}"
     retries: "{{ network.env.retry_count}}"
     delay: 50
     ignore_errors: yes
+    when: network.env.proxy != 'none'
 
   # ----------------------------------------------------------------------  
   # Deploy notaries
@@ -79,6 +87,7 @@
     include_role:
       name: setup/notary
     vars:
+      services: "{{ item.services }}"
       node: "{{ item.services.notary }}"
       organisation: "{{ item.name | lower }}"
       component_ns: "{{ item.name | lower }}-ns"
@@ -104,9 +113,3 @@
       gitops: "{{ item.gitops }}" 
     loop: "{{ network['organizations'] }}"  
     when: network['type'] == 'corda' and item.type == 'node'
-
-  # delete build directory
-  - name: Remove build directory
-    file:
-      path: "./build"
-      state: absent

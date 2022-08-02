@@ -1,10 +1,15 @@
+[//]: # (##############################################################################################)
+[//]: # (Copyright Accenture. All Rights Reserved.)
+[//]: # (SPDX-License-Identifier: Apache-2.0)
+[//]: # (##############################################################################################)
+
 ## create/storageclass
 This role creates a value file of StorageClass
 
 ## Tasks:
 ### 1. Check if storageclass exists
 This task check if StorageClass exists in Kubernetes Cluster.
-It uses *k8s_facts* Ansible role.
+It uses *k8s_info* Ansible role.
 
 #### Variables:
  - storageclass_name: A name of StorageClass.
@@ -32,13 +37,9 @@ This task pushes generated Helm releases into remote branch.
 This task calls role from: *{{ playbook_dir }}/../../shared/configuration/roles/git_push*
 #### Input Variables:
  - GIT_DIR: A path of git directory. By default "{{ playbook_dir }}/../../../"
- - GIT_REPO: Url for git repository. It uses a variable *{{ gitops.git_push_url }}* 
- - GIT_USERNAME: Username of git repository. It uses a variable *{{ gitops.username }}*
- - GIT_EMAIL: User's email of git repository. It uses a variable *{{ gitops.email }}*
- - GIT_PASSWORD: User's password of git repository. It uses a variable *{{ gitops.password }}*
- - GIT_BRANCH: A name of branch, where are pushed Helm releases. It uses a variable *{{ gitops.branch }}*
  - GIT_RESET_PATH: A path of git directory, which is reseted for committing. Default value is *platforms/hyperledger-indy/configuration*
- - msg: A message, which is printed, when the role is running.
+ - gitops: *item.gitops* from network.yaml
+ - msg: A message for git commit
 
 ### 4. Wait for Storageclass creation for {{ component_name }}
 This task is waiting for creation StorageClass.

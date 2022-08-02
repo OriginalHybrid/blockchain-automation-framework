@@ -1,16 +1,20 @@
-apiVersion: flux.weave.works/v1beta1
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
 kind: HelmRelease
 metadata:
   name: {{ component_name }}-initial-registration
   annotations:
-    flux.weave.works/automated: "false"
+    fluxcd.io/automated: "false"
   namespace: {{ component_ns }}
 spec:
   releaseName: {{ component_name }}-initial-registration
+  interval: 1m
   chart:
-    path: {{ gitops.chart_source }}/{{ chart }}-initial-registration
-    git: {{ gitops.git_ssh }}
-    ref: {{ gitops.branch }}
+    spec:
+      chart: {{ gitops.chart_source }}/{{ chart }}-initial-registration
+      sourceRef:
+        kind: GitRepository
+        name: flux-{{ network.env.type }}
+        namespace: flux-{{ network.env.type }}
   values:
     nodeName: {{ component_name }}
     replicas: 1
@@ -19,7 +23,9 @@ spec:
     image:
       containerName: {{ network.docker.url }}/{{ docker_image }}
       initContainerName: {{ network.docker.url }}/alpine-utils:1.0
+{% if network.docker.username is defined %}
       imagePullSecret: regcred
+{% endif %}
       privateCertificate: true
       doormanCertAlias: {{ doorman_domain | regex_replace('/', '') }}
       networkmapCertAlias: {{ nms_domain | regex_replace('/', '') }}
@@ -49,11 +55,11 @@ spec:
       attachmentCacheBound: 1024
       {% if chart == 'notary' %}      
       notary:
-        validating: false
+        validating: {{ node.validating }}
+        serviceLegalName: {{ node.serviceName | default() }}
       {% endif %} 
       detectPublicIp: false
       database:
-        transactionIsolationLevel: READ_COMMITTED
         exportHibernateJMXStatistics: false
       dbUrl: {{ component_name|e }}db
       dbPort: {{ node.dbtcp.port|e }}
@@ -69,7 +75,7 @@ spec:
       networkMapURL: 
       doormanURL:
 {% endif %}
-      jarVersion: "4.0"
+      jarVersion: {{ network.version | quote }}
       devMode: false
       env:
         - name: JAVA_OPTIONS
@@ -105,11 +111,11 @@ spec:
       role: vault-role
       authpath: corda{{ component_name }}
       serviceaccountname: vault-auth
-      dbsecretprefix: {{ component_name }}/credentials/database
-      rpcusersecretprefix: {{ component_name }}/credentials/rpcusers
-      tokensecretprefix: {{ component_name }}/credentials/vaultroottoken
-      keystoresecretprefix: {{ component_name }}/credentials/keystore
-      certsecretprefix: {{ component_name }}/certs
+      dbsecretprefix: {{ component_name }}/data/credentials/database
+      rpcusersecretprefix: {{ component_name }}/data/credentials/rpcusers
+      keystoresecretprefix: {{ component_name }}/data/credentials/keystore
+      certsecretprefix: {{ component_name }}/data/certs
+      retries: 10
         
     healthcheck:
       readinesscheckinterval: 10

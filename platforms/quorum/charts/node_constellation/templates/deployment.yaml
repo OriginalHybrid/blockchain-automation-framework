@@ -1,4 +1,10 @@
-apiVersion: apps/v1beta1
+##############################################################################################
+#  Copyright Accenture. All Rights Reserved.
+#
+#  SPDX-License-Identifier: Apache-2.0
+##############################################################################################
+
+apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   namespace: {{ .Values.metadata.namespace }}
@@ -13,7 +19,16 @@ metadata:
 spec:
   serviceName: {{ .Values.node.name }}
   replicas: {{ .Values.replicaCount }}
-  strategy:
+  selector:
+    matchLabels:
+      app: consortiumchain
+      name: {{ .Values.node.name }}
+      service.rpc: {{ .Values.node.name }}
+      app.kubernetes.io/name: {{ .Values.node.name }}
+      helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+      app.kubernetes.io/managed-by: {{ .Release.Service }}
+      app.kubernetes.io/instance: {{ .Release.Name }} 
+  updateStrategy:
     type: RollingUpdate
   template:
     metadata:
@@ -22,6 +37,10 @@ spec:
         app: consortiumchain
         name: {{ .Values.node.name }}
         service.rpc: {{ .Values.node.name }}
+        app.kubernetes.io/name: {{ .Values.node.name }}
+        helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+        app.kubernetes.io/managed-by: {{ .Release.Service }}
+        app.kubernetes.io/instance: {{ .Release.Name }} 
     spec:
       serviceAccountName: {{ .Values.vault.serviceaccountname }}
       imagePullSecrets:
@@ -36,11 +55,10 @@ spec:
             items:
               - key: genesis.json.base64
                 path: genesis.json.base64
-            
       initContainers:
       - name: certificates-init
         image: {{ .Values.images.alpineutils }}
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         env:
         - name: VAULT_ADDR
           value: {{ .Values.vault.address }}
@@ -58,10 +76,24 @@ spec:
           #!/usr/bin/env sh
           
           validateVaultResponse () {
-          if echo ${2} | grep "errors"; then
-           echo "ERROR: unable to retrieve ${1}: ${2}"
-           exit 1
-           fi
+            if echo ${2} | grep "errors"; then
+              echo "ERROR: unable to retrieve ${1}: ${2}"
+              exit 1
+            fi
+            if  [ "$3" == "LOOKUPSECRETRESPONSE" ]
+            then
+              http_code=$(curl -sS -o /dev/null -w "%{http_code}" \
+              --header "X-Vault-Token: ${VAULT_CLIENT_TOKEN}" \
+              ${VAULT_ADDR}/v1/${vault_secret_key})
+              curl_response=$?
+              if test "$http_code" != "200" ; then
+                  echo "Http response code from Vault - $http_code"
+                  if test "$curl_response" != "0"; then
+                     echo "Error: curl command failed with error code - $curl_response"
+                     exit 1
+                  fi
+              fi
+            fi
           }
           KUBE_SA_TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
           echo "Getting secrets from Vault Server: ${VAULT_ADDR}"
@@ -81,12 +113,12 @@ spec:
             --header "X-Vault-Token:${VAULT_CLIENT_TOKEN}" \
             ${VAULT_ADDR}/v1/${vault_secret_key} | \
             jq -r 'if .errors then . else . end')
-          validateVaultResponse "secret (${vault_secret_key})" "${LOOKUP_SECRET_RESPONSE}" 
+          validateVaultResponse "secret (${vault_secret_key})" "${LOOKUP_SECRET_RESPONSE}" "LOOKUPSECRETRESPONSE" 
           nodekey=$(echo ${LOOKUP_SECRET_RESPONSE} | jq -r '.data["nodekey"]')
           keystore=$(echo ${LOOKUP_SECRET_RESPONSE} | jq -r '.data["keystore"]')
-          gethpassword=$(echo ${LOOKUP_SECRET_RESPONSE} | jq -r '.data["gethpassword"]')                    
+          geth_password=$(echo ${LOOKUP_SECRET_RESPONSE} | jq -r '.data["geth_password"]')                    
           
-          echo "${gethpassword}" > ${OUTPUT_PATH}/passwords.txt          
+          echo "${geth_password}" > ${OUTPUT_PATH}/passwords.txt          
           echo "${nodekey}" > ${OUTPUT_PATH}/nodekey
           echo "${keystore}" > ${OUTPUT_PATH}/{{ .Values.node.keystore }}
 
@@ -96,18 +128,19 @@ spec:
             --header "X-Vault-Token:${VAULT_CLIENT_TOKEN}" \
             ${VAULT_ADDR}/v1/${vault_secret_key} | \
             jq -r 'if .errors then . else . end')
-          validateVaultResponse "secret (${vault_secret_key})" "${LOOKUP_SECRET_RESPONSE}"
+          validateVaultResponse "secret (${vault_secret_key})" "${LOOKUP_SECRET_RESPONSE}" "LOOKUPSECRETRESPONSE" 
 
           tmpub=$(echo ${LOOKUP_SECRET_RESPONSE} | jq -r '.data["tm.pub"]')
           tmkey=$(echo ${LOOKUP_SECRET_RESPONSE} | jq -r '.data["tm.key"]')
           echo "${tmpub}" > ${OUTPUT_PATH}/tm.pub
           echo "${tmkey}" > ${OUTPUT_PATH}/tm.key
-          
+
         volumeMounts:
         - name: certificates
           mountPath: /secret
       - name: quorum-genesis-init-container
         image: "{{ .Values.images.node }}"
+        imagePullPolicy: IfNotPresent
         command: [ "sh" ]
         args:
         - "-cx"
@@ -130,10 +163,12 @@ spec:
       containers:
       - name: constellation
         image: {{ .Values.images.constellation }}
+        imagePullPolicy: IfNotPresent
         command: ["sh"]
         args:
         - "-cx"
         - "chmod 600 $QUORUM_HOME/crypto/keys/tm.key;
+
            mkdir -p $QUORUM_HOME/logs;
            mkdir -p $QUORUM_HOME/database;
            DDIR=$QUORUM_HOME/tm;
@@ -164,17 +199,18 @@ spec:
           mountPath: {{ .Values.node.mountPath }}
       - name: quorum
         image: "{{ .Values.images.node }}"
+        imagePullPolicy: IfNotPresent
         command: ["sh"]
         args:
         - "-cx"
         - |-
           #!/usr/bin/env sh
-          sleep 5;
-          
-          echo -n {{ .Values.staticnodes | toJson | quote }} > $QUORUM_DATA_DIR/static-nodes.json
+          apk add curl;
+          echo -n {{ .Values.staticnodes | toRawJson | quote }} > $QUORUM_DATA_DIR/static-nodes.json
           mkdir -p $QUORUM_DATA_DIR/geth
           mkdir -p $QUORUM_DATA_DIR/keystore          
           # touch $qd/passwords.txt
+
           cp $QUORUM_HOME/crypto/keys/{{ .Values.node.keystore }} $QUORUM_DATA_DIR/keystore/
           cp $QUORUM_HOME/crypto/keys/nodekey $QUORUM_DATA_DIR/geth/
           cp $QUORUM_HOME/crypto/keys/passwords.txt $QUORUM_DATA_DIR/password.txt
@@ -186,26 +222,47 @@ spec:
           rm -f $QUORUM_HOME/crypto/keys/nodekey
           rm -f $QUORUM_HOME/crypto/keys/passwords.txt
           
+          sleep 5;
+          echo slept for 5 to give transaction manager time to start;
+
           args=""
+          NODE_STATUS=""
           if [ $CONSENSUS == 'raft' ]; then
-            args=" --raft --raftport {{ .Values.node.ports.raft }} --rpcapi admin,db,eth,debug,miner,net,shh,txpool,personal,web3,quorum,raft "
+            NODE_STATUS={{ .Values.node.status }}
+          fi;
+          if [ $CONSENSUS == 'raft' ] && [ $NODE_STATUS == 'additional' ]; then
+            args="--raftdnsenable --raft --raftport {{ .Values.node.ports.raft }} --rpcapi admin,db,eth,debug,miner,net,shh,txpool,personal,web3,quorum,raft --raftjoinexisting {{ .Values.node.peer_id }}"
+          fi;
+          if [ $CONSENSUS == 'raft' ] && [ $NODE_STATUS == 'default' ]; then
+            args="--raftdnsenable --raft --raftport {{ .Values.node.ports.raft }} --rpcapi admin,db,eth,debug,miner,net,shh,txpool,personal,web3,quorum,raft"
           fi;
           if [ $CONSENSUS == 'ibft' ]; then
-            args=" --istanbul.blockperiod 1 --syncmode full --mine --minerthreads 1 --rpcapi admin,db,eth,debug,miner,net,shh,txpool,personal,web3,quorum,istanbul "
+            args=" --istanbul.blockperiod 3 --syncmode full --mine --miner.threads 1 --rpcapi admin,db,eth,debug,miner,net,shh,txpool,personal,web3,quorum,istanbul "
           fi;
+
+          LOCK_STATUS={{ .Values.node.lock }}
+          if [ $LOCK_STATUS = false ]
+          then
+            args=" ${args} --unlock 0 " 
+          fi
 
           /usr/local/bin/geth \
            --datadir $QUORUM_DATA_DIR \
            $args \
+           --identity {{ .Values.node.subject | quote }} \
+           --vmdebug \
+           --gcmode=archive \
            --nodiscover \
+           --nat=none \
            --verbosity 9 \
-           --unlock 0 \
            --emitcheckpoints \
            --rpc \
            --rpcaddr 0.0.0.0 \
            --rpcport {{ .Values.node.ports.rpc }} \
+           --rpcvhosts=* \
            --port {{ .Values.node.ports.quorum }} \
            --password $QUORUM_DATA_DIR/password.txt 2>&1 | tee -a $QUORUM_HOME/logs/quorum.log;
+
         ports:
           - containerPort: {{ .Values.node.ports.rpc }}
           - containerPort: {{ .Values.node.ports.quorum }}

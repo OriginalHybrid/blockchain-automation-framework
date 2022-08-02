@@ -1,37 +1,21 @@
-# Set enode_data_list to empty
-- name: Set enode_data_list to []
-  set_fact:
-    enode_data_list: []
+##############################################################################################
+#  Copyright Accenture. All Rights Reserved.
+#
+#  SPDX-License-Identifier: Apache-2.0
+##############################################################################################
 
-# Get enode data
-- name: Get enode data for each node of all organization
-  include_tasks: enode_data.yaml
-  loop: "{{ network['organizations'] }}"
-  loop_control:
-    loop_var: org
-
-# This task creates the Tessera Transaction Manager value files for each node of organization
-- name: Create value file for Tessera TM for each node
-  include_role:
-    name: helm_component
+# Create helm release files for validator nodes
+- name: Create helm release files for validator nodes
+  include_tasks: validator_main.yaml
   vars:
-    component_name: "{{ name }}{{ peer.name }}tessera"
-    type: "tessera"
-    genesis: "{{ lookup('file', '{{ build_path }}/genesis.json') | b64encode }}"
-  loop: "{{ peers }}"
-  loop_control:
-    loop_var: peer
-
-#Git Push : Pushes the above generated files to git directory 
-- name: Git Push
-  include_role: 
-    name: "{{ playbook_dir }}/../../shared/configuration/roles/git_push"
+    peer_query: "peers[?type=='validator']"
+    validator_node: "{{ org.services | json_query(peer_query) | first | default() }}"
+  when: validator_node | length > 0
+    
+# Create helm release files for member nodes
+- name: Create helm release files for member nodes
+  include_tasks: member_main.yaml
   vars:
-    GIT_DIR: "{{ playbook_dir }}/../../../"
-    GIT_REPO: "{{ item.gitops.git_push_url }}"
-    GIT_USERNAME: "{{ item.gitops.username }}"
-    GIT_EMAIL: "{{ item.gitops.email }}"
-    GIT_PASSWORD: "{{ item.gitops.password }}"
-    GIT_BRANCH: "{{ item.gitops.branch }}"
-    GIT_RESET_PATH: "platforms/quorum/configuration"
-    msg: "Pushing Peer files"
+    peer_query: "peers[?type=='member']"
+    member_node: "{{ org.services | json_query(peer_query) | first | default() }}"
+  when: member_node | length > 0

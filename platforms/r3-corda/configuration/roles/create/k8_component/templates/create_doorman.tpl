@@ -1,23 +1,27 @@
-apiVersion: flux.weave.works/v1beta1
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
 kind: HelmRelease
 metadata:
   name: {{ services.doorman.name }}
   annotations:
-    flux.weave.works/automated: "false"
+    fluxcd.io/automated: "false"
   namespace: {{ component_ns }}
 spec:
   releaseName: {{ services.doorman.name }}
+  interval: 1m
   chart:
-    path: {{ org.gitops.chart_source }}/{{ chart }}
-    git: {{ org.gitops.git_ssh }}
-    ref: {{ org.gitops.branch }}
+    spec:
+      chart: {{ org.gitops.chart_source }}/{{ chart }}
+      sourceRef:
+        kind: GitRepository
+        name: flux-{{ network.env.type }}
+        namespace: flux-{{ network.env.type }}
   values:
     nodeName: {{ services.doorman.name }}
     metadata:
       namespace: {{component_ns }}
     image:
       authusername: sa
-      containerName: {{ network.docker.url }}/doorman-linuxkit:latest
+      containerName: {{ network.docker.url }}/bevel-doorman-linuxkit:latest
       env:
       - name: DOORMAN_PORT
         value: 8080
@@ -37,7 +41,9 @@ spec:
         value: admin
       - name: DB_USERNAME
         value: {{ services.doorman.name }}
+{% if network.docker.username is defined %}
       imagePullSecret: regcred
+{% endif %}
       tlsCertificate: {{ chart_tls }}
       initContainerName: {{ network.docker.url }}/alpine-utils:1.0
       mountPath:
@@ -52,11 +58,11 @@ spec:
       role: vault-role
       authpath: {{ component_auth }}
       serviceaccountname: vault-auth
-      certsecretprefix: {{ services.doorman.name }}/certs
-      dbcredsecretprefix: {{ services.doorman.name }}/credentials/mongodb
-      secretdoormanpass: {{ services.doorman.name }}/credentials/userpassword
-      tlscertsecretprefix: {{ services.doorman.name }}/tlscerts
-      dbcertsecretprefix: {{ component_name }}/certs
+      certsecretprefix: {{ services.doorman.name }}/data/certs
+      dbcredsecretprefix: {{ services.doorman.name }}/data/credentials/mongodb
+      secretdoormanpass: {{ services.doorman.name }}/data/credentials/userpassword
+      tlscertsecretprefix: {{ services.doorman.name }}/data/tlscerts
+      dbcertsecretprefix: {{ component_name }}/data/certs
     healthcheck:
       readinesscheckinterval: 10
       readinessthreshold: 15
@@ -64,14 +70,18 @@ spec:
     service:
       port: {{ services.doorman.ports.servicePort }}
       targetPort: {{ services.doorman.ports.targetPort }}
+{% if services.doorman.ports.nodePort is defined %}
+      type: NodePort
+      nodePort: {{ services.doorman.ports.nodePort }}
+{% else %}
       type: ClusterIP
+{% endif %}
       annotations: {}
     deployment:
       annotations: {}
     pvc:
       annotations: {}
+{% if network.env.proxy == 'ambassador' %}
     ambassador:
       external_url_suffix: {{item.external_url_suffix}}
-      
-    
-        
+{% endif %}

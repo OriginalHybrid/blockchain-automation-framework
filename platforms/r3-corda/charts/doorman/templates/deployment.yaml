@@ -1,9 +1,15 @@
+##############################################################################################
+#  Copyright Accenture. All Rights Reserved.
+#
+#  SPDX-License-Identifier: Apache-2.0
+##############################################################################################
+
 # Deployment
 # Creates the replicated container and manages lifecycle
 # TLS certs mounted
 # Persistent Volume mounted
 # Service points to this deployment (uses labels!)
-apiVersion: apps/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ .Values.nodeName }}
@@ -19,6 +25,11 @@ metadata:
     app.kubernetes.io/instance: {{ .Release.Name }}
 spec:
   replicas: {{ .Values.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Values.nodeName }}
+      app.kubernetes.io/name: {{ .Values.nodeName }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
   template:
     metadata:
       labels:
@@ -78,29 +89,43 @@ spec:
         args:
         - |-
              #!/usr/bin/env sh
-             validateVaultResponse () {
-             if echo ${2} | grep "errors"; then
-              echo "ERROR: unable to retrieve ${1}: ${2}"
-              exit 1
-              fi
-             }
+              validateVaultResponse () {
+                if echo ${2} | grep "errors"; then
+                  echo "ERROR: unable to retrieve ${1}: ${2}"
+                  exit 1
+                fi
+                if  [ "$3" == "LOOKUPSECRETRESPONSE" ]
+                then
+                  http_code=$(curl -sS -o /dev/null -w "%{http_code}" \
+                  --header "X-Vault-Token: ${VAULT_TOKEN}" \
+                  ${VAULT_ADDR}/v1/${1})
+                  curl_response=$?
+                  if test "$http_code" != "200" ; then
+                      echo "Http response code from Vault - $http_code"
+                      if test "$curl_response" != "0"; then
+                        echo "Error: curl command failed with error code - $curl_response"
+                        exit 1
+                      fi
+                  fi
+                fi
+              }
 
              KUBE_SA_TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
              echo "Getting secrets from Vault Server"
-             VAULT_TOKEN=$(curl -sS --request POST ${VAULT_ADDR}/v1/auth/${KUBERNETES_AUTH_PATH}/login -H "Content-Type: application/json" -d '{"role":"vault-role","jwt":"'"${KUBE_SA_TOKEN}"'"}' | jq -r 'if .errors then . else .auth.client_token end')
+             VAULT_TOKEN=$(curl -sS --request POST ${VAULT_ADDR}/v1/auth/${KUBERNETES_AUTH_PATH}/login -H "Content-Type: application/json" -d '{"role":"'"${VAULT_APP_ROLE}"'","jwt":"'"${KUBE_SA_TOKEN}"'"}' | jq -r 'if .errors then . else .auth.client_token end')
              validateVaultResponse 'vault login token' "${VAULT_TOKEN}"
              echo "logged into vault"
              OUTPUT_PATH=${MOUNT_PATH}
 
              LOOKUP_SECRET_RESPONSE=$(curl -sS --header "X-Vault-Token: ${VAULT_TOKEN}" ${VAULT_ADDR}/v1/{{ .Values.vault.certsecretprefix }} | jq -r 'if .errors then . else . end')
 
-             validateVaultResponse "secret ({{ .Values.vault.certsecretprefix }})" "${LOOKUP_SECRET_RESPONSE}"
+             validateVaultResponse "{{ .Values.vault.certsecretprefix }}" "${LOOKUP_SECRET_RESPONSE}" "LOOKUPSECRETRESPONSE"
 
-             ROOTCA_KEY=$(echo ${LOOKUP_SECRET_RESPONSE} | jq -r '.data["rootcakey"]')
+             ROOTCA_KEY=$(echo ${LOOKUP_SECRET_RESPONSE} | jq -r '.data.data["rootcakey"]')
              mkdir -p ${OUTPUT_PATH}/root;
              echo "${ROOTCA_KEY}" | base64 -d > ${OUTPUT_PATH}/root/keys.jks
 
-             DOORMAN_KEY=$(echo ${LOOKUP_SECRET_RESPONSE} | jq -r '.data["doorman.jks"]')
+             DOORMAN_KEY=$(echo ${LOOKUP_SECRET_RESPONSE} | jq -r '.data.data["doorman.jks"]')
              mkdir -p ${OUTPUT_PATH}/doorman;
              echo "${DOORMAN_KEY}" | base64 -d > ${OUTPUT_PATH}/doorman/keys.jks
              chmod 777 -R {{ .Values.image.mountPath.basePath }}/db
@@ -130,28 +155,44 @@ spec:
         args:
         - |-
              #!/usr/bin/env sh
-             validateVaultResponse () {
-             if echo ${2} | grep "errors"; then
-              echo "ERROR: unable to retrieve ${1}: ${2}"
-              exit 1
-              fi
-             }
+              validateVaultResponse () {
+                if echo ${2} | grep "errors"; then
+                  echo "ERROR: unable to retrieve ${1}: ${2}"
+                  exit 1
+                fi
+                if  [ "$3" == "LOOKUPSECRETRESPONSE" ]
+                then
+                  http_code=$(curl -sS -o /dev/null -w "%{http_code}" \
+                  --header "X-Vault-Token: ${VAULT_TOKEN}" \
+                  ${VAULT_ADDR}/v1/${1})
+                  curl_response=$?
+                  if test "$http_code" != "200" ; then
+                      echo "Http response code from Vault - $http_code"
+                      if test "$curl_response" != "0"; then
+                        echo "Error: curl command failed with error code - $curl_response"
+                        exit 1
+                      fi
+                  fi
+                fi
+              }
 
              KUBE_SA_TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
              echo "Getting secrets from Vault Server"
-             VAULT_TOKEN=$(curl -sS --request POST ${VAULT_ADDR}/v1/auth/${KUBERNETES_AUTH_PATH}/login -H "Content-Type: application/json" -d '{"role":"vault-role","jwt":"'"${KUBE_SA_TOKEN}"'"}' | jq -r 'if .errors then . else .auth.client_token end')
+             VAULT_TOKEN=$(curl -sS --request POST ${VAULT_ADDR}/v1/auth/${KUBERNETES_AUTH_PATH}/login -H "Content-Type: application/json" -d '{"role":"'"${VAULT_APP_ROLE}"'","jwt":"'"${KUBE_SA_TOKEN}"'"}' | jq -r 'if .errors then . else .auth.client_token end')
              validateVaultResponse 'vault login token' "${VAULT_TOKEN}"
              echo "logged into vault"
              OUTPUT_PATH=${MOUNT_PATH}
              LOOKUP_PWD_RESPONSE_DB_PASS=$(curl -sS --header "X-Vault-Token: ${VAULT_TOKEN}" ${VAULT_ADDR}/v1/${DB_CRED_SECRET_PREFIX} | jq -r 'if .errors then . else . end')
+
+             validateVaultResponse "${DB_CRED_SECRET_PREFIX}" "${LOOKUP_PWD_RESPONSE_DB_PASS}" "LOOKUPSECRETRESPONSE"
              
-             MONGODB_PASSWORD=$(echo ${LOOKUP_PWD_RESPONSE_DB_PASS} | jq -r '.data["mongodbPassword"]')
+             MONGODB_PASSWORD=$(echo ${LOOKUP_PWD_RESPONSE_DB_PASS} | jq -r '.data.data["mongodbPassword"]')
              echo "${MONGODB_PASSWORD}" >> ${MOUNT_PATH}/db_root_password
              cat ${MOUNT_PATH}/db_root_password
              LOOKUP_SECRET_RESPONSE=$(curl -sS --header "X-Vault-Token: ${VAULT_TOKEN}" ${VAULT_ADDR}/v1/${USER_SECRET_PREFIX} | jq -r 'if .errors then . else . end')
-             validateVaultResponse "secret (${CERTS_SECRET_PREFIX})" "${LOOKUP_SECRET_RESPONSE}"
+             validateVaultResponse "${USER_SECRET_PREFIX}" "${LOOKUP_SECRET_RESPONSE}" "LOOKUPSECRETRESPONSE"
              
-             USER_PASSWORD=$(echo ${LOOKUP_SECRET_RESPONSE} | jq -r '.data["{{ .Values.image.authusername }}"]')
+             USER_PASSWORD=$(echo ${LOOKUP_SECRET_RESPONSE} | jq -r '.data.data["{{ .Values.image.authusername }}"]')
              echo "${USER_PASSWORD}" >> ${MOUNT_PATH}/user_cred
              
         volumeMounts:

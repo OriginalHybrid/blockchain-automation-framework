@@ -1,16 +1,20 @@
-apiVersion: flux.weave.works/v1beta1
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
 kind: HelmRelease
 metadata:
   name: {{ peer_name }}-frontend
   namespace: {{ component_ns }}
   annotations:
-    flux.weave.works/automated: "false"
+    fluxcd.io/automated: "false"
 spec:
+  releaseName: {{ peer_name }}{{ network.type }}-frontend
+  interval: 1m
   chart:
-    path: {{ component_gitops.chart_source }}/frontend
-    git: "{{ component_gitops.git_ssh }}"
-    ref: "{{ component_gitops.branch }}"
-  releaseName: {{ peer_name }}-frontend
+   spec:
+    chart: {{ component_gitops.chart_source }}/frontend
+    sourceRef:
+      kind: GitRepository
+      name: flux-{{ network.env.type }}
+      namespace: flux-{{ network.env.type }}
   values:
     nodeName: {{ peer_name }}-frontend
     metadata:
@@ -21,16 +25,11 @@ spec:
       nodePorts:
         port: {{ peer_frontend_port }}
         targetPort: {{ peer_frontend_targetport }}
-      image: {{ network.docker.url }}/supplychain_frontend:latest
+      image: {{ network.docker.url }}/bevel-supplychain-frontend:stable
       pullPolicy: Always
       pullSecrets: regcred
-{% if network.env.proxy == 'ambassador' %}
-      env:
-        webserver: https://{{ peer_name }}api.{{ organization_data.external_url_suffix }}:8443
-{% else %}
       env:
         webserver: https://{{ peer_name }}api.{{ organization_data.external_url_suffix }}
-{% endif %}
     deployment:
       annotations: {}
     proxy:

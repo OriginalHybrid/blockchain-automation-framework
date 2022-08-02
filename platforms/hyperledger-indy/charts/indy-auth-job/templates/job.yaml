@@ -1,3 +1,9 @@
+##############################################################################################
+#  Copyright Accenture. All Rights Reserved.
+#
+#  SPDX-License-Identifier: Apache-2.0
+##############################################################################################
+
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -16,7 +22,7 @@ spec:
       containers:
         - name:  "{{ $.Values.image.name }}"
           image: "{{ $.Values.image.repository }}"
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           command:
             - "sh"
             - "-c"

@@ -1,7 +1,7 @@
 var express = require('express')
   , router = express.Router();
 
-const { productContract, fromAddress } = require('../web3services');
+const { productContract, fromAddress, fromNodeSubject,protocol } = require('../web3services');
 var multer = require('multer'); // v1.0.5
 var upload = multer(); // for parsing multipart/form-data
 var bodyParser = require('body-parser');
@@ -15,38 +15,45 @@ router.get('/containerless', function (req, res) {
   var containerlessArray = [];
   productContract.methods
     .getProductsLength()
-    .call({ from: fromAddress, gas: 6721975, gasPrice: "30000000" })
+    .call({ from: fromAddress, gas: 6721975, gasPrice: "0" })
     .then(async response => {
       productCount = response;
       console.log("LENGTH ", response);
-      for (var i = 1; i <= productCount; i++) { 
+      for (var i = 1; i <= productCount; i++) {
         var toPush = await productContract.methods
           .getContainerlessAt(i - 1)
-          .call({ from: fromAddress, gas: 6721975, gasPrice: "30000000" })
-          var product = {};
+          .call({ from: fromAddress, gas: 6721975, gasPrice: "0" })
+        var product = {};
+        if (toPush.trackingID != 0) {
+          product.trackingID = toPush.trackingID;
           product.productName = toPush.productName;
           product.health = toPush.health;
           product.sold = toPush.sold;
           product.recalled = toPush.recalled;
+          product.custodian = toPush.custodian;
+          product.custodian = product.custodian + "," + toPush.lastScannedAt;
+          if(protocol==="raft")
+            product.time  = (new Date(toPush.timestamp/1000000)).getTime();
+          else
+            product.time  = (new Date(toPush.timestamp * 1000)).getTime();
+          product.lastScannedAt = toPush.lastScannedAt;
+          product.containerID = toPush.containerID;
           product.misc = {};
           for (var j = 0; j < toPush.misc.length; j++) {
             var json = JSON.parse(toPush.misc[j]);
             var key = Object.keys(json);
             product.misc[key] = json[key];
           }
-          product.custodian = toPush.custodian,
-          product.trackingID = toPush.trackingID,
-          product.timestamp = toPush.timestamp,
-          product.containerID = toPush.containerID,
           product.linearId = {
-          "externalId": null,
-          "id": "af9efb7f-d13b-4b68-a10b-e680b5d2b2b0"
-          },
+            "externalId": null,
+            "id": toPush.trackingID
+          };
           product.participants = toPush.participants;
           containerlessArray.push(product);
-    }
-    res.send(containerlessArray)
-  })
+        }
+      }
+      res.send(containerlessArray)
+    })
 });
 
 //GET product with or without trackingID
@@ -57,7 +64,7 @@ router.get('/:trackingID?', function (req, res) {
     console.log(trackingID, "***");
     productContract.methods
       .getSingleProduct(req.params.trackingID)
-      .call({ from: fromAddress, gas: 6721975, gasPrice: "30000000" })
+      .call({ from: fromAddress, gas: 6721975, gasPrice: "0" })
       .then(response => {
         var newProduct = response;
         var product = {};
@@ -66,7 +73,6 @@ router.get('/:trackingID?', function (req, res) {
         product.sold = false;
         product.recalled = false;
         product.misc = {};
-        //product.misc[newProduct.misc[0]] = newProduct.misc[1];
 
         for (var j = 0; j < newProduct.misc.length; j++) {
           var json = JSON.parse(newProduct.misc[j]);
@@ -74,16 +80,19 @@ router.get('/:trackingID?', function (req, res) {
           product.misc[key] = json[key];
         }
 
-
-        product.custodian = newProduct.custodian,
-          product.trackingID = newProduct.trackingID,
-          product.timestamp = newProduct.timestamp,
-          product.containerID = newProduct.containerID,
+        product.custodian = newProduct.custodian;
+          product.custodian = product.custodian + "," + newProduct.lastScannedAt;
+          product.trackingID = newProduct.trackingID;
+          if(protocol==="raft")
+            product.timestamp  = (new Date(newProduct.timestamp/1000000)).getTime();
+          else
+            product.timestamp  = (new Date(newProduct.timestamp * 1000)).getTime();
+          product.containerID = newProduct.containerID;
           product.linearId = {
             "externalId": null,
-            "id": "af9efb7f-d13b-4b68-a10b-e680b5d2b2b0"
-          },
-          product.participants = newProduct.participants
+            "id": newProduct.trackingID
+          };
+          product.participants = newProduct.participants;
         res.send(product);
 
       })
@@ -95,23 +104,22 @@ router.get('/:trackingID?', function (req, res) {
     // TODO: Get all products
     var arrayLength;
     var displayArray = [];
-    productContract.methods //do thing with 5 array 
+    productContract.methods
       .getProductsLength()
-      .call({ from: fromAddress, gas: 6721975, gasPrice: "30000000" })
+      .call({ from: fromAddress, gas: 6721975, gasPrice: "0" })
       .then(async response => {
-        arrayLength = response; 
+        arrayLength = response;
         console.log("LENGTH ", response);
         for (var i = 1; i <= arrayLength; i++) {
           var toPush = await productContract.methods
             .getProductAt(i)
-            .call({ from: fromAddress, gas: 6721975, gasPrice: "30000000" })
+            .call({ from: fromAddress, gas: 6721975, gasPrice: "0" })
           var product = {};
           product.productName = toPush.productName;
           product.health = toPush.health;
           product.sold = false;
           product.recalled = false;
           product.misc = {};
-          //product.misc[toPush.misc[0]] = toPush.misc[1];
           for (var j = 0; j < toPush.misc.length; j++) {
             var json = JSON.parse(toPush.misc[j]);
             var key = Object.keys(json);
@@ -119,16 +127,19 @@ router.get('/:trackingID?', function (req, res) {
           }
 
 
-          product.custodian = toPush.custodian,
-            product.trackingID = toPush.trackingID,
-            product.timestamp = toPush.timestamp,
-            product.containerID = toPush.containerID,
+          product.custodian = toPush.custodian;
+            product.custodian = product.custodian + "," + toPush.lastScannedAt;
+            product.trackingID = toPush.trackingID;
+            if(protocol==="raft")
+              product.timestamp  = (new Date(toPush.timestamp/1000000)).getTime();
+            else
+              product.timestamp  = (new Date(toPush.timestamp * 1000)).getTime();
+            product.containerID = toPush.containerID;
             product.linearId = {
               "externalId": null,
-              "id": "af9efb7f-d13b-4b68-a10b-e680b5d2b2b0"
-            },
-            product.participants = toPush.participants
-          // console.log("^^^^",product);
+              "id": toPush.trackingID
+            };
+            product.participants = toPush.participants;
           displayArray.push(product);
         }
         res.send(displayArray)
@@ -142,14 +153,16 @@ router.get('/:trackingID?', function (req, res) {
 
 //POST for new product
 router.post('/', upload.array(), function (req, res) {
-  res.setTimeout(15000);
   // TODO: Create product
   let newProduct = {
     productName: req.body.productName,
     misc: req.body.misc,
     trackingID: req.body.trackingID,
-    counterparties: req.body.counterparties
+    counterparties: req.body.counterparties,
+    lastScannedAt: fromNodeSubject
   };
+  // Add this.address in the counterparties list
+  newProduct.counterparties.push(fromAddress+","+fromNodeSubject);
   var misc = [];
   var keys = Object.keys(newProduct.misc);
 
@@ -164,10 +177,10 @@ router.post('/', upload.array(), function (req, res) {
       newProduct.productName,
       "health",
       misc,
-      "",
-      newProduct.counterparties
+      newProduct.lastScannedAt,
+      newProduct.counterparties,
     )
-    .send({ from: fromAddress, gas: 6721975, gasPrice: "30000000" })
+    .send({ from: fromAddress, gas: 6721975, gasPrice: "0" })
     .on("receipt", function (receipt) {
       // receipt example
       if (receipt.status === true) {
@@ -187,17 +200,18 @@ router.post('/', upload.array(), function (req, res) {
     });
 })
 
-//PUT for changing custodian
+//PUT for updating custodian
 router.put('/:trackingID/custodian', function (req, res) {
-  res.setTimeout(15000);
   // TODO: Implement change custodian functionality
+  var identityArray = fromNodeSubject.split(',');
   var trackingID = req.params.trackingID;
-  var longLatCoordinates = req.body.longLatCoordinates;
+  var longLatCoordinates = identityArray[3];
+  var lastScannedAt = fromNodeSubject;
   console.log(trackingID);
   console.log(longLatCoordinates);
   productContract.methods
-    .updateCustodian(trackingID, longLatCoordinates)
-    .send({ from: fromAddress, gas: 6721975, gasPrice: "30000000" })
+    .updateCustodian(trackingID, lastScannedAt)
+    .send({ from: fromAddress, gas: 6721975, gasPrice: "0" })
     .then(response => {
       res.send(response)
     })

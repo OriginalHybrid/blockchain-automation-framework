@@ -1,10 +1,8 @@
 ##############################################################################################
-# This tasks ensures the directory of crypto existance, if not exits it creates a new one
-- name: Ensures {{ release_dir }}/{{ component_type }}/{{ component_name }} dir exists
-  file:
-    path: "{{ release_dir }}/{{ new_component_name }}/"
-    recurse: yes
-    state: directory
+#  Copyright Accenture. All Rights Reserved.
+#
+#  SPDX-License-Identifier: Apache-2.0
+##############################################################################################
 
 ################################################################################################
 # This tasks gets data from vault
@@ -13,8 +11,8 @@
     rm data.yaml
     identity_data=""
     trustee_name={{ admin_name }}
-    trustee_did=$(curl --header "X-Vault-Token:{{ ac_vault_tokens[admin_component_name] }}" "{{ admin_org_vault_url }}"/v1/"{{ admin_component_name }}"/"{{ admin_type }}"/"{{ admin_name }}"/identity/public | jq -r 'if .errors then . else .data.did end');
-    trustee_verkey=$(curl --header "X-Vault-Token: {{ ac_vault_tokens[admin_component_name] }}" "{{ admin_org_vault_url }}"/v1/"{{ admin_component_name }}"/"{{ admin_type }}"/"{{ admin_name }}"/node/public/verif_keys | jq -r 'if .errors then . else .data."verification-key" end');
+    trustee_did=$(curl --header "X-Vault-Token:{{ ac_vault_tokens[admin_component_name] }}" "{{ admin_org_vault_url }}"/v1/"{{ admin_component_name }}"/data/"{{ admin_type }}"/"{{ admin_name }}"/identity/public | jq -r 'if .errors then . else .data.data.did end');
+    trustee_verkey=$(curl --header "X-Vault-Token: {{ ac_vault_tokens[admin_component_name] }}" "{{ admin_org_vault_url }}"/v1/"{{ admin_component_name }}"/data/"{{ admin_type }}"/"{{ admin_name }}"/node/public/verif_keys | jq -r 'if .errors then . else .data.data."verification-key" end');
     first_trustee_in_org_did="${trustee_did}"
     identity_data="first_trustee_name: ${first_trustee_in_org_did}"
     echo "${identity_data}" >> data.yaml
@@ -26,8 +24,8 @@
     echo "${identity_data}" >> data.yaml
 
     endorser_name={{ identity_name }}
-    endorser_did=$(curl --header "X-Vault-Token: {{ ac_vault_tokens[new_component_name] }}" "{{ new_org_vault_url }}"/v1/"{{ new_component_name }}"/"{{ identity_type }}"/"{{ identity_name }}"/identity/public | jq -r 'if .errors then . else .data.did end');
-    endorser_verkey=$(curl --header "X-Vault-Token: {{ ac_vault_tokens[new_component_name] }}" "{{ new_org_vault_url }}"/v1/"{{ new_component_name }}"/"{{ identity_type }}"/"{{ identity_name }}"/node/public/verif_keys | jq -r 'if .errors then . else .data."verification-key" end');
+    endorser_did=$(curl --header "X-Vault-Token: {{ ac_vault_tokens[new_component_name] }}" "{{ new_org_vault_url }}"/v1/"{{ new_component_name }}"/data/"{{ identity_type }}"/"{{ identity_name }}"/identity/public | jq -r 'if .errors then . else .data.data.did end');
+    endorser_verkey=$(curl --header "X-Vault-Token: {{ ac_vault_tokens[new_component_name] }}" "{{ new_org_vault_url }}"/v1/"{{ new_component_name }}"/data/"{{ identity_type }}"/"{{ identity_name }}"/node/public/verif_keys | jq -r 'if .errors then . else .data.data."verification-key" end');
 
     identity_data="endorser_name: ${endorser_name}"
     echo "${identity_data}" >> data.yaml
@@ -37,11 +35,7 @@
     echo "${identity_data}" >> data.yaml
   register: identity_data
 
-- name: Debugging
-  debug:
-    msg: "the value file is {{lookup('file', 'data.yaml') }}"
-
-- name: "Inserting into file"
+- name: "Inserting file into Variable"
   include_vars:
     file: data.yaml
     name: file_var
@@ -53,7 +47,7 @@
     src: "{{ dlt_templates[component_type] }}"
     dest: "{{ values_file }}"
   vars:
-    values_file: "{{ release_dir }}/{{ new_component_name }}/{{ identity_name }}-{{ component_type }}.yaml"
+    values_file: "{{ release_dir }}/{{ component_type }}/{{ identity_name }}-{{ component_type }}.yaml"
     chart: "indy-ledger-txn"
     identity_name: "{{ identity_name }}"
     vault_role: "rw"
@@ -72,4 +66,4 @@
   vars:
     helmtemplate_type: "{{ component_type }}"
     chart_path: "{{ gitops.chart_source }}"
-    value_file: "{{ release_dir }}/{{ new_component_name }}/{{ identity_name }}.yaml"
+    value_file: "{{ release_dir }}/{{ component_type }}/{{ identity_name }}.yaml"

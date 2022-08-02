@@ -1,4 +1,4 @@
-pragma solidity 0.6.1;
+pragma solidity >0.6.0;
 pragma experimental ABIEncoderV2;
 import "./Permission.sol";
 
@@ -25,8 +25,8 @@ contract ProductContract is Permission {
 
     struct Transaction {
         address custodian;
-        string lastScannedAt;
         uint256 timestamp;
+        string lastScannedAt;
     }
 
     /**
@@ -36,7 +36,7 @@ contract ProductContract is Permission {
     string[] public productKeys;
 
     mapping(string => Product) productSupplyChain;
-    mapping(string => Transaction[]) public history;
+    mapping(string => Transaction[]) history;
 
     event locationEvent(string trackingID, string location);
     event sendTrackingID(string);
@@ -76,14 +76,12 @@ contract ProductContract is Permission {
         productKeys.push(_trackingID);
         productSupplyChain[_trackingID] = newProduct;
 
-        Transaction memory newTransaction = Transaction(_custodian,_lastScannedAt,_timestamp);
+        Transaction memory newTransaction = Transaction(_custodian,_timestamp, _lastScannedAt);
         history[_trackingID].push(newTransaction);
 
         emit sendTrackingID(_trackingID);
         return newProduct;
     }
-
-    //addCounterParties is a private method that updates the custodian of the product using the trackingID
     /**
     *@dev updates the custodian of the product using the trackingID
     */
@@ -126,33 +124,31 @@ function _toLower(string memory str) internal pure returns (string memory) {
 		return string(bLower);
 	}
 
-    /**
-    *@dev You must be the current custodian to call this function
-    */
 
     function updateCustodian(string memory _productID, string memory longLat ) public returns(string memory, string memory){
         require(bytes(productSupplyChain[_productID].trackingID).length > 0, "HTTP 404"); //product exists in supply chain
-        require(bytes(productSupplyChain[_productID].containerID).length <= 0, "HTTP 404"); //product containerid is ""
 
         address newCustodian;
         string memory ourAddress = addressToString(msg.sender);
         bool isParticipant = false;
         string memory _trackingID;
+        string memory lowercaseLongLat = _toLower(longLat);
+        bytes memory yourIdentity = abi.encodePacked(ourAddress,",",lowercaseLongLat);
 
         for(uint i = 0; i < productSupplyChain[_productID].participants.length; i++ ){
             string memory participant = _toLower(productSupplyChain[_productID].participants[i]);
-            if(keccak256(abi.encodePacked((ourAddress))) == keccak256(abi.encodePacked((participant))) ) {
+            if(keccak256(yourIdentity) == keccak256(abi.encodePacked((participant))) ) {
                 newCustodian = msg.sender;
                 _trackingID = productSupplyChain[_productID].trackingID;
                 isParticipant = true;
             }
         }
-        require(isParticipant, "HTTP 404: your identity is not in particiapnt list");
+        require(isParticipant, "HTTP 404: your identity is not in participant list");
 
         uint256 _timestamp = block.timestamp;
         productSupplyChain[_productID].custodian = msg.sender;
         productSupplyChain[_productID].lastScannedAt = longLat;
-        history[_trackingID].push(Transaction(newCustodian, longLat, _timestamp));
+        history[_trackingID].push(Transaction(newCustodian, _timestamp, longLat));
 
         emit sendTrackingID(_productID);
     }

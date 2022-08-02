@@ -1,10 +1,15 @@
+[//]: # (##############################################################################################)
+[//]: # (Copyright Accenture. All Rights Reserved.)
+[//]: # (SPDX-License-Identifier: Apache-2.0)
+[//]: # (##############################################################################################)
+
 ## check/k8_component
 This role is used for waiting to kubernetes component.
 
 ## Tasks:
 ### 1. Wait for {{ component_type }} {{ component_name }}
 This Task is stated when *component_type* is *Namespace*, *ClusterRoleBinding* or *StorageClass*.
-It uses *k8s_facts* Ansible role.
+It uses *k8s_info* Ansible role.
 
 #### Variables:
  - component_type: A type of component.
@@ -17,7 +22,7 @@ It uses *k8s_facts* Ansible role.
  
 ### 2. Wait for {{ component_type }} {{ component_name }}
 This Task is stated when *component_type* is *ServiceAccount* or *ConfigMap*.
-It uses *k8s_facts* Ansible role.
+It uses *k8s_info* Ansible role.
 
 #### Variables:
  - component_type: A type of component.
@@ -31,7 +36,7 @@ It uses *k8s_facts* Ansible role.
  
 ### 3. Wait for {{ component_type }} {{ component_name }}
 This Task is stated when *component_type* is *Pod*.
-It uses *k8s_facts* Ansible role.
+It uses *k8s_info* Ansible role.
 
 #### Variables:
  - component_type: A type of component.

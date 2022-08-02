@@ -1,16 +1,20 @@
-apiVersion: flux.weave.works/v1beta1
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
 kind: HelmRelease
 metadata:
   name: {{ name }}-restserver
   namespace: {{ component_ns }}
   annotations:
-    flux.weave.works/automated: "false"
+    fluxcd.io/automated: "false"
 spec:
-  chart:
-    path: {{ component_gitops.chart_source }}/fabric-restserver
-    git: {{ component_gitops.git_ssh }}
-    ref: {{ component_gitops.branch }}
   releaseName: {{ name }}-restserver
+  interval: 1m
+  chart:
+   spec:
+    chart: {{ component_gitops.chart_source }}/fabric-restserver
+    sourceRef:
+      kind: GitRepository
+      name: flux-{{ network.env.type }}
+      namespace: flux-{{ network.env.type }}
   values:
     metadata:
       namespace: {{ component_ns }}
@@ -18,21 +22,21 @@ spec:
       name: {{ name }}-restserver
       port: {{ peer_restserver_port }}
       localmspid: {{ name }}MSP
-      image: {{ network.docker.url }}/supplychain_fabric/rest_server:latest
-      username: admin
-      cert_path: "/secret/tls/admin.cert"
-      key_path: "/secret/tls/admin.pem"
+      image: {{ network.container_registry.url | lower }}/bevel-supplychain-fabric:rest-server-latest
+      username: user1
+      cert_path: "/secret/tls/user1.cert"
+      key_path: "/secret/tls/user1.pem"
     storage:
       storageclassname: {{ name }}sc
       storagesize: 512Mi
     vault:
       address: {{ component_vault.url }}
       role: vault-role
-      authpath: {{ component_ns }}-auth
-      secretprefix: secret/crypto/peerOrganizations/{{ component_ns }}
+      authpath: {{ network.env.type }}{{ component_ns }}-auth
+      secretprefix: {{ component_vault.secret_path | default('secretsv2') }}/data/crypto/peerOrganizations/{{ component_ns }}
       serviceaccountname: vault-auth
       imagesecretname: regcred
-      image: adopblockchaincloud0502.azurecr.io/alpine-utils:1.0
+      image: ghcr.io/hyperledger/alpine-utils:1.0
     service:
       servicetype: ClusterIP
       ports:

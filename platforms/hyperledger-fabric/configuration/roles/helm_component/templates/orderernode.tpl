@@ -1,29 +1,57 @@
-apiVersion: flux.weave.works/v1beta1
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
 kind: HelmRelease
 metadata:
   name: {{ org_name }}-{{ orderer.name }}
   namespace: {{ namespace }}
   annotations:
-    flux.weave.works/automated: "false"
+    fluxcd.io/automated: "false"
 spec:
+  interval: 1m
   releaseName: {{ org_name }}-{{ orderer.name }}
   chart:
-    git: {{ git_url }}
-    ref: {{ git_branch }}
-    path: {{ charts_dir }}/orderernode
+    spec:
+      interval: 1m
+      sourceRef:
+        kind: GitRepository
+        name: flux-{{ network.env.type }}
+        namespace: flux-{{ network.env.type }}
+      chart: {{ charts_dir }}/orderernode
   values:
     metadata:
       namespace: {{ namespace }}
       images:
         orderer: {{ orderer_image }}
         alpineutils: {{ alpine_image }}
-
+{% if network.env.annotations is defined %}
+    annotations:  
+      service:
+{% for item in network.env.annotations.service %}
+{% for key, value in item.items() %}
+        - {{ key }}: {{ value | quote }}
+{% endfor %}
+{% endfor %}
+      pvc:
+{% for item in network.env.annotations.pvc %}
+{% for key, value in item.items() %}
+        - {{ key }}: {{ value | quote }}
+{% endfor %}
+{% endfor %}
+      deployment:
+{% for item in network.env.annotations.deployment %}
+{% for key, value in item.items() %}
+        - {{ key }}: {{ value | quote }}
+{% endfor %}
+{% endfor %}
+{% endif %}
     orderer:
       name: {{ orderer.name }}
       loglevel: info
       localmspid: {{ org_name }}MSP
       tlsstatus: true
       keepaliveserverinterval: 10s
+    
+    consensus:
+      name: {{ orderer.consensus }}
 
     storage:
       storageclassname: {{ org_name }}sc
@@ -41,8 +69,8 @@ spec:
     vault:
       address: {{ vault.url }}
       role: vault-role
-      authpath: {{ namespace }}-auth
-      secretprefix: secret/crypto/ordererOrganizations/{{ namespace }}/orderers/{{ orderer.name }}.{{ namespace }}
+      authpath: {{ network.env.type }}{{ namespace }}-auth
+      secretprefix: {{ vault.secret_path | default('secretsv2') }}/data/crypto/ordererOrganizations/{{ namespace }}/orderers/{{ orderer.name }}.{{ namespace }}
       imagesecretname: regcred
       serviceaccountname: vault-auth
 {% if orderer.consensus == 'kafka' %}
@@ -60,4 +88,14 @@ spec:
       external_url_suffix: {{ item.external_url_suffix }}
 
     genesis: |-
-{{ genesis | indent(width=6, indentfirst=True) }}
+{{ genesis | indent(width=6, first=True) }}
+
+    config:
+      pod:
+        resources:
+          limits:
+            memory: 512M
+            cpu: 1
+          requests:
+            memory: 512M
+            cpu: 0.5

@@ -1,19 +1,27 @@
-apiVersion: flux.weave.works/v1beta1
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
 kind: HelmRelease
 metadata:
   name: {{ component_name }}
   namespace: {{ namespace }}
   annotations:
-    flux.weave.works/automated: "false"
+    fluxcd.io/automated: "false"
 spec:
+  interval: 1m
   releaseName: {{ component_name }}
   chart:
-    git: {{ git_url }}
-    ref: {{ git_branch }}
-    path: {{ charts_dir }}/invoke_chaincode
+    spec:
+      interval: 1m
+      sourceRef:
+        kind: GitRepository
+        name: flux-{{ network.env.type }}
+        namespace: flux-{{ network.env.type }}
+      chart: {{ charts_dir }}/invoke_chaincode
   values:
     metadata:
       namespace: {{ namespace }}
+      network:
+        version: {{ network.version }}
+      add_organization: {{ add_organization }}
       images:
         fabrictools: {{ fabrictools_image }}
         alpineutils: {{ alpine_image }}
@@ -26,18 +34,41 @@ spec:
     vault:
       role: vault-role
       address: {{ vault.url }}
-      authpath: {{ namespace | e }}-auth
-      adminsecretprefix: secret/crypto/peerOrganizations/{{ namespace }}/users/admin 
-      orderersecretprefix: secret/crypto/peerOrganizations/{{ namespace }}/orderer
+      authpath: {{ network.env.type }}{{ namespace | e }}-auth
+      secretpath: {{ vault.secret_path | default('secretsv2') }}
+      adminsecretprefix: {{ vault.secret_path | default('secretsv2') }}/data/crypto/peerOrganizations/{{ namespace }}/users/admin 
+      orderersecretprefix: {{ vault.secret_path | default('secretsv2') }}/data/crypto/peerOrganizations/{{ namespace }}/orderer
       serviceaccountname: vault-auth
       imagesecretname: regcred
       tls: false
     orderer:
       address: {{ participant.ordererAddress }}
     chaincode:
+      builder: hyperledger/fabric-ccenv:{{ network.version }}
       name: {{ component_chaincode.name | lower | e }}
       version: {{ component_chaincode.version }}
-      instantiationarguments: {{ component_chaincode.arguments | quote}}
-      endorsementpolicies:  {{ component_chaincode.endorsements | quote}}
+      invokearguments: {{ component_chaincode.arguments | quote}}
+      endorsementpolicies:  {{ component_chaincode.endorsements | quote }}
     channel:
       name: {{ item.channel_name | lower }}
+{% if '2.' in network.version %}
+    endorsers:
+      creator: {{ namespace }}
+      name: {% for name in endorsers_list %}{%- for key, value in name.items() %}{% if key == 'name' %} {{ value }} {% endif %}{%- endfor %}{% endfor %}
+
+      corepeeraddress: {% for address in endorsers_list %}{%- for key, value in address.items() %}{% if key == 'peercoreaddress' %} {{ value }} {% endif %}{% endfor -%}{% endfor %}
+
+      nameslist: 
+{% for name in endorsers_list %}
+{% for key, value in name.items() %}
+{% if key == 'name' %}
+        - {{ key }}: {{ value }}
+{% endif %}
+{% endfor %}
+{% endfor %}
+{% else %}
+    endorsers:
+        creator: {{ namespace }}
+        name: {{ peer_name }}
+        corepeeraddress: {{ peer_address }}
+{% endif %}

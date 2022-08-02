@@ -1,4 +1,10 @@
-apiVersion: apps/v1beta1
+##############################################################################################
+#  Copyright Accenture. All Rights Reserved.
+#
+#  SPDX-License-Identifier: Apache-2.0
+##############################################################################################
+
+apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: {{ $.Values.zookeeper.name }}
@@ -16,11 +22,20 @@ metadata:
 spec:
   serviceName: "{{ $.Values.zookeeper.peerservicename }}"
   replicas: {{ $.Values.zookeeper.replicas }}
+  selector:
+    matchLabels:
+      app: {{ $.Values.zookeeper.name }}
+      app.kubernetes.io/name: {{ $.Values.zookeeper.name }}
+      helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+      app.kubernetes.io/managed-by: {{ .Release.Service }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
   template:
     metadata:
       labels:
         app: {{ $.Values.zookeeper.name }}
         app.kubernetes.io/name: {{ $.Values.zookeeper.name }}
+        helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+        app.kubernetes.io/managed-by: {{ .Release.Service }}
         app.kubernetes.io/instance: {{ .Release.Name }}
     spec:
       terminationGracePeriodSeconds: 10
@@ -42,7 +57,7 @@ spec:
           name: leader-election
        
 ---
-apiVersion: apps/v1beta1
+apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: {{ $.Values.kafka.name }}
@@ -56,6 +71,11 @@ metadata:
 spec:
   serviceName: "{{ $.Values.kafka.brokerservicename }}"
   replicas: {{ $.Values.kafka.replicas }}
+  selector:
+    matchLabels:
+      app: {{ $.Values.kafka.name }}
+      app.kubernetes.io/name: {{ $.Values.kafka.name }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
   template:
     metadata:
       labels:
@@ -67,7 +87,7 @@ spec:
       initContainers:
       - name: zk-healthcheck
         image: {{ $.Values.metadata.images.healthcheck }}
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         env:
         - name: ZOOKEEPER_CLIENT_SERVICE
           value: {{ $.Values.zookeeper.peerservicename }}
@@ -101,6 +121,7 @@ spec:
       containers:
       - name: {{ $.Values.kafka.name }}
         image: {{ $.Values.metadata.images.kafka }}
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 9092
         env:
